@@ -1,0 +1,47 @@
+#! /bin/bash
+
+# ------------------------------------------
+# 
+# Created by Statemood, 2014.07.17 16:15
+# Updated by Statemood, 2015.06.04 17:38
+#            Statemood@gmail.com
+#
+# Project monitor
+#    https://github.com/Statemood/monitor
+# ------------------------------------------
+
+ PROCESS="$1"
+  PROC_H="`echo $PROCESS | cut -c 1`"
+  PROC_T="`echo $PROCESS | cut -c 2-32`"
+
+      OK="0"
+ WARNING="1"
+CRITICAL="2"
+ UNKNOWN="3"
+
+get_info(){
+    proc_info=`ps aux | grep "$PROCESS" | egrep -v "grep |$(basename $0)"`
+     proc_pid=`echo $proc_info | awk '{print $2}'`
+     run_user=`echo $proc_info | awk '{print $1}'`
+     run_date=`echo $proc_info | awk '{print $9}'`
+    proc_date=`date -d "$run_date" +'%F %T'`
+    usage_cpu="`echo $proc_info | awk '{print $3}'`%"
+    usage_mem="`echo $proc_info | awk '{print $4}'`%"
+     cpu_time="`echo $proc_info | awk '{print $10}'`"
+}
+
+ps aux | grep -q "[$PROC_H]$PROC_T"
+if [ $? = 0 ]
+then
+    get_info
+    echo -e "OK - Process $PROCESS is running with Pid $proc_pid by $run_user since $proc_date. CT: $cpu_time, CU: $usage_cpu, MU: $usage_mem"   
+    exit 0
+elif [ $? = 1 ]
+then
+    echo -e "CRITICAL - Process $PROCESS is not running"
+    exit 1
+else
+    echo -e "UNKNOWN - Process $PROCESS: Status unknown"
+    exit 3
+fi
+
