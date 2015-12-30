@@ -1,0 +1,73 @@
+#! /bin/bash
+
+# ------------------------------------------
+<<<<<<< HEAD
+# check_memory
+# 
+# Created by Statemood, 2013.12.09 13:30
+# Updated by Statemood, 2013.12.09 14:00
+#            Statemood@gmail.com
+#
+# Project mgutils:
+#    https://github.com/Statemood/nagios-plugs
+# ------------------------------------------
+
+warn="$1"
+crit="$2"
+
+m_total=`free -m | grep 'Mem'  | awk '{print $2}'`
+ m_used=`free -m | grep 'che:' | awk '{print $3}'`
+ m_free=`free -m | grep 'che:' | awk '{print $4}'`
+m_cache=`free -m | grep 'Mem'  | awk '{print $7}'`
+
+g_total=`echo "scale=2;$m_total / 1024" | bc`
+ g_used=`echo "scale=2;$m_used  / 1024" | bc`
+ g_free=`echo "scale=2;$m_free  / 1024" | bc`
+g_cache=`echo "scale=2;$m_cache / 1024" | bc`
+
+
+value_w=`echo "scale=2;$m_total * 0.01 * $warn" | bc | awk -F '.' '{print $1}'`
+value_c=`echo "scale=2;$m_total * 0.01 * $crit" | bc | awk -F '.' '{print $1}'`
+
+Standrd_msg(){
+    echo "Memory usage: Total: ${g_total}GB, Used: ${g_used}GB, Cached: ${g_cache}GB, Free: ${g_free}GB"
+}
+
+if [ "$m_used" -ge "$value_c" ]
+then
+    echo "CRITICAL - `Standrd_msg`"
+    exit 2
+fi
+
+if [ "$m_used" -ge "$value_w" ]
+then
+    echo "WARNING - `Standrd_msg`"
+    exit 1
+else
+    echo "OK - `Standrd_msg`"
+    exit 0
+fi
+=======
+# Created by Statemood, 2013.09.02 14:00
+# Updated by Statemood, 2013.09.02 14:30
+#            Statemood@gmail.com
+#
+# Project:
+#       https://github.com/Statemood/
+# ------------------------------------------
+
+# check_memory mem  85 95
+# check_memory swap 60 70
+
+tempdir=/dev/shm/temp
+
+
+
+case $1 in
+    mem)
+        
+    
+    swap)
+    
+esac
+>>>>>>> 2a49c43f8d24f63ab3f7a6a80a6f5b5ed0d45677

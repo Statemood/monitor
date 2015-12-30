@@ -1,0 +1,65 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Created by Statemood, 2013.08.22 10:00
+# Updated by Statemood, 2013.08.22 10:50
+#            Statemood@gmail.com
+#
+# Project:
+#       https://github.com/Statemood/
+# ------------------------------------------
+
+# 检查指定目录内是否存在可下载却不能下载的文件
+# Type: 
+#       .gz, .tgz, .tar, .bak
+# check_file_leak /data/www/web-root-dir ignore-name "\.tgz|\.gz|\.tar|\.rar|\.zip|\.xz|\.lz"
+
+checkdir="$1"
+excluded="$2"
+filetype="$3"
+
+tempfile=`mktemp /dev/shm/XXXXXXXXXXXXXXXX`
+
+EXIT_OKAY=0
+EXIT_WARN=1
+EXIT_CRIT=2
+EXIT_UNWN=3
+
+if [ ! -d "$checkdir" ]
+then
+    echo -e "$checkdir not found"
+    exit $EXIT_CRIT
+fi 
+
+find "$checkdir" | egrep "$filetype" | egrep -v "$excluded" > $tempfile
+
+if [ -f "$tempfile" ]
+then
+    count=`wc -l $tempfile | awk '{print $1}'`
+    if [ "$count" = "0" ]
+    then
+        echo -e "OK - No downloadable files found in dir $checkdir"
+        rm -rf $tempfile
+        exit $EXIT_OKAY
+    fi 
+    
+    if [ "$count" = "1" ]
+    then
+        echo -e "WARNING - $count downloadable file found in dir $checkdir: $(basename `cat $tempfile`)"
+        rm -rf $tempfile
+        exit $EXIT_WARN
+    fi 
+    
+    if [ "$count" -gt 1 ]
+    then
+        echo -e "CRITICAL - $count downloadable files found in dir $checkdir"
+        rm -rf $tempfile
+        exit $EXIT_CRIT
+    fi 
+    
+    rm -rf $tempfile
+else
+    echo -e "UNKNOWN - Internal Error detected program terminated" 
+    exit $EXIT_UNWN
+fi 
+

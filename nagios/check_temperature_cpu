@@ -1,0 +1,46 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Created by Statemood, 2013.08.27 12:00
+# Updated by Statemood, 2013.08.27 15:00
+#            Statemood@gmail.com
+#
+# Project:
+#       https://github.com/Statemood/
+# ------------------------------------------
+#                        CPU  core warn crit
+# check_temperature_cpu  0    4    70   80
+
+VALUE_NAME="$1"
+VALUE_CORE="$2"
+VALUE_WARN="$3"
+VALUE_CRIT="$4"
+
+temp_cpu_print(){
+    printline=`expr $VALUE_CORE + 3`
+    sensors | sed -n "/coretemp-isa-000${VALUE_NAME}/,${printline}p" | sed -n "3,${printline}p" | \
+              sed -e 's/Physical id/CPU/' -e 's/\+//' | awk '{print $3}' | tr -s "\n" "," | sed -e 's/,$//'
+}
+
+cputemp=`temp_cpu_print | awk -F ',' '{print $1}'`
+tempnum=`echo $cputemp  | awk -F '.' '{print $1}'`
+tempcre=`temp_cpu_print | sed "s/^$cputemp,//"`
+
+if [ -z "$cputemp" ]
+then
+    echo -e "UNKNOWN - CPU names error"
+    exit 3
+fi
+
+if   [ "$tempnum" -gt "$VALUE_CRIT" ]
+then
+    echo -e "CRITICAL - CPU $VALUE_NAME temperature is $cputemp, Cores 0-`expr $VALUE_CORE - 1` = $tempcre"
+    exit 2
+elif [ "$tempnum" -gt "$VALUE_WARN" ]
+then
+    echo -e "WARNING - CPU $VALUE_NAME temperature is $cputemp, Cores 0-`expr $VALUE_CORE - 1` = $tempcre"
+    exit 1
+else
+    echo -e "OK - CPU $VALUE_NAME temperature is $cputemp, Cores 0-`expr $VALUE_CORE - 1` = $tempcre"
+    exit 0
+fi

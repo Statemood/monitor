@@ -1,0 +1,41 @@
+#! /bin/bash
+
+# ------------------------------------------
+# 
+# Created by Statemood, 2013.10.30 13:00
+# Updated by Statemood, 2013.10.30 14:00
+#            Statemood@gmail.com
+#
+# Project mgutils:
+#    https://github.com/Statemood/nagios-plugs
+# ------------------------------------------
+
+name="$1"
+item="$2"
+    
+ sl='127.0.0.1'
+ exe='/usr/local/nagios/libexec/check_mongodb'
+     
+proc(){
+    ps aux | grep mongod | awk -F '/mongod ' '{print $2}' | grep "$name"
+}
+
+info(){
+    $exe -H $1 -A $2 -P $3 -W 30 -C 50 | awk -F ': ' '{print $2}'
+}
+
+mp=27017
+ip=`proc | awk -F 'source=' '{print $2}' | awk -F ':' '{print $1}'`
+sp=`proc | awk -F 'port='   '{print $2}' | awk '{print $1}'`
+
+m=`info $ip $item $mp`
+s=`info $sl $item $sp`
+
+if [ $m = $s ] || [ `expr $m - $s` -lt 3 ]
+then
+    echo "OK - MongoDB SLAVE $name $item is OK(m=$m, s=$s)"
+    exit 0
+else
+    echo "CRITICAL - MongoDB SLAVE $name $item is ERROR(m=$m, s=$s)"
+    exit 2
+fi

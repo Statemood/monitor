@@ -1,0 +1,13 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Created by Statemood, 2013.12.17 14:20
+# Updated by Statemood, 2013.12.17 15:00
+#            Statemood@gmail.com
+#
+# Project:
+#       https://github.com/Statemood/
+# ------------------------------------------
+
+warn="$1"
+crit="$2"

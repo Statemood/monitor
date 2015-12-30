@@ -1,0 +1,23 @@
+#! /bin/bash
+
+# ----------------------------------------------
+# Created by Satetmood, 2015-09-17
+#
+#            Statemood@gmail.com
+#
+# Project monitor
+#   https://github.com/Statemood/monitor
+# ----------------------------------------------
+
+for args in "$@"
+do
+    case $args in
+        --url)
+            url="$2"
+            shift 2
+            ;;
+        --active)
+            curl -m 5 -s --retry 3 $url |  sed '2,3d' | sed 's/ connections//' | sed 's/: /:/g' | tr -s "\n" " " | tr -s A-Z a-z
+            ;;
+    esac
+done

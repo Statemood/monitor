@@ -1,0 +1,129 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Created by Statemood, 2014.07.03 15:30
+# Updated by Statemood, 2014.07.04 12:00
+#            Statemood@gmail.com
+#
+# Project nagios-plugs:
+#       https://github.com/Statemood
+# ------------------------------------------
+
+IPMI=/dev/shm/temp/ipmi.info
+
+msg(){
+    case $1 in
+        0)
+            echo -e "OK - IPMI: $2";;
+        1)
+            echo -e "WARNING - IPMI: $2";;
+        2)  
+            echo -e "CRITICAL - IPMI: $2";;
+        3)
+            echo -e "UNKNOWN - IPMI: $2";;  
+    esac
+    exit $1
+}
+
+for argv in "$@"
+do
+    case $argv in 
+        -w|-min)
+            VALU_WARN="$2"
+            shift 2
+            ;;
+        -c|-max)
+            VALU_CRIT="$2"
+            shift 2
+            ;;
+        -i|--item)
+            case $2 in 
+                amps)
+                    CUR_AMPS=`grep 'Amps' $IPMI | awk '{print $3}' | egrep -v 'na'`
+                    MSG_AMPS="Current Power AMPS is ${CUR_AMPS}A"
+                    [[ $CUR_AMPS > $VALU_CRIT ]] && msg 2 "$MSG_AMPS"
+                    [[ $CUR_AMPS > $VALU_WARN ]] && msg 1 "$MSG_AMPS"
+                    [[ $CUR_AMPS < $VALU_WARN ]] && msg 0 "$MSG_AMPS"
+                    ;;
+                ambtmp)
+                    RAW_AMTP=`grep 'Ambient Temp' $IPMI | awk '{print $4}' | egrep -v 'na|disable' | awk -F '.' '{print $1}' | sort`
+                    case $3 in 
+                        a)  CUR_AMTP=`echo $RAW_AMTP | awk '{print $1}'`;;
+                        b)  CUR_AMTP=`echo $RAW_AMTP | awk '{print $2}'`;;
+                    esac   
+                    MSG_AMTP="Current Ambient Temperature is $CUR_AMTP°C" 
+                    [[ $CUR_AMTP -gt $VALU_CRIT ]] && msg 2 "$MSG_AMTP"
+                    if [ $CUR_AMTP -gt $VALU_WARN ]
+                    then
+                        msg 1 "$MSG_AMTP"
+                    else
+                        msg 0 "$MSG_AMTP"
+                    fi
+                    ;;
+                sysfan)
+                    RAW_SFAN=`grep 'FAN MOD' $IPMI | awk '{print $6}'`
+                    case "$3" in
+                        A)
+                            FAN_NAME="A"
+                            LOW_SFAN=`echo $RAW_SFAN | tr -s " " "\n" | head -6 | sort -n | head -1`
+                            LOW_LINE=`echo $RAW_SFAN | tr -s " " "\n" | head -6 | grep -n $LOW_SFAN | awk -F ':' '{print $1}' | sort -n | head -1`
+                            CUR_SFAN=`echo $RAW_SFAN | tr -s " " "\n" | head -6 | tr -s "\n" " "`
+                            ;;
+                        B)
+                            FAN_NAME="B"
+                            LOW_SFAN=`echo $RAW_SFAN | tr -s " " "\n" | tail -6 | sort -n | head -1`
+                            LOW_LINE=`echo $RAW_SFAN | tr -s " " "\n" | tail -6 | grep -n $LOW_SFAN | awk -F ':' '{print $1}' | sort -n | head -1`
+                            CUR_SFAN=`echo $RAW_SFAN | tr -s " " "\n" | tail -6 | tr -s "\n" " "`
+                            ;;
+                    esac
+                    MSG_SFAN="Current System FAN RPM(1${FAN_NAME}-6${FAN_NAME}) is at: $CUR_SFAN"
+                    if [ $LOW_SFAN -lt $VALU_CRIT ]
+                    then
+                        msg 2 "FAN $LOW_LINE$FAN_NAME RPM is $LOW_SFAN. $MSG_SFAN"
+                    else
+                        msg 0 "$MSG_SFAN"
+                    fi
+                    ;;  
+                planartmp)
+                    CUR_PLTP=`grep 'Planar Temp' $IPMI | awk '{print $4}'`
+                    MSG_PLTP="Current Planar Temperature is $CUR_PLTP°C"
+                    if [ $CUR_PLTP -gt $VALU_CRIT ]
+                    then
+                        msg 2 "$MSG_PLTP"
+                    elif [ $CUR_PLTP -gt $VALU_WARN ]
+                    then
+                        msg 1 "$MSG_PLTP"
+                    elif [ $CUR_PLTP -lt $VALU_WARN ]
+                    then
+                        msg 0 "$MSG_PLTP"
+                    else
+                        msg 3 "Cannot fetch data" 
+                    fi
+                    ;;
+                voltage)
+                    CUR_VOLT=`grep 'Voltage' $IPMI | awk '{print $3}' | egrep -v 'na|disable' | awk -F '.' '{print $1}'`
+                    MSG_VOLT="Current Power voltage is ${CUR_VOLT}V"
+                    if [ $CUR_VOLT -lt $VALU_WARN ] || [ $CUR_VOLT -gt $VALU_CRIT ]
+                    then
+                        msg 2 "$MSG_VOLT"
+                    else
+                        msg 0 "$MSG_VOLT"
+                    fi
+                    ;;
+                watts)
+                    CUR_WATT=`grep 'System Level' $IPMI | awk '{print $4}' | awk -F '.' '{print $1}'`
+                    MSG_WATT="Current Power is ${CUR_WATT}W"
+                    if [ $CUR_WATT -gt $VALU_CRIT ]
+                    then
+                        msg 2 "$MSG_WATT"
+                    elif [ $CUR_WATT -gt $VALU_WARN ]
+                    then
+                        msg 1 "$MSG_WATT"
+                    else
+                        msg 0 "$MSG_WATT"
+                    fi
+                    ;;
+            esac    
+            ;;
+    esac
+done

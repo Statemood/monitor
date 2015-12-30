@@ -1,0 +1,14 @@
+#! /bin/bash
+
+# ------------------------------------------
+# 
+# Created by Statemood, 2013.10.31 16:15
+# Updated by Statemood, 2013.10.31 16:20
+#            Statemood@gmail.com
+#
+# Project mgutils:
+#    https://github.com/Statemood/nagios-plugs
+# ------------------------------------------
+
+killall -9 nrpe
+/usr/local/nagios/bin/nrpe -c /usr/local/nagios/etc/nrpe.cfg -d

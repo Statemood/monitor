@@ -1,0 +1,23 @@
+#! /bin/bash
+
+# ------------------------------------------
+# 
+# Created by Statemood, 2013.10.31 16:00
+# Updated by Statemood, 2013.10.31 16:05
+#            Statemood@gmail.com
+#
+# Project mgutils:
+#    https://github.com/Statemood/nagios-plugs
+# ------------------------------------------
+
+SNMP_INFO(){
+    snmpwalk -v 2c -c idy_cti_mgr 127.0.0.1 $1
+}
+
+get_uptime(){
+    s=`SNMP_INFO hrSystem | egrep 'hrSystemUptime|hrSystemDate'`
+    uptime="`echo $s | grep 'Uptime' | awk -F ') '       '{print $2}'`"
+    sydate="`echo $s | grep 'Date'   | awk -F 'STRING: ' '{print $2}'`"
+}
+
+

@@ -1,0 +1,84 @@
+#! /bin/bash
+
+# ----------------------------------------------
+# Created by Satetmood, 2015-09-17
+#
+#            Statemood@gmail.com
+#
+# Project monitor
+#   https://github.com/Statemood/monitor
+# 
+# Check MongoDB Status for Cacti & Nagios
+# ----------------------------------------------
+
+# Default Port
+ temp=`mktemp /dev/shm/XXXXXXXXXXXX`
+ port=27017
+mongo=/usr/local/mongodb/bin/mongo
+
+usage="
+    $(basename $0)
+        -h, --help          Display this message
+        -H, --host          Hostname or IP Address
+        -P, --port          Port of the MongoDB
+        -i, --item          Item
+"
+
+CleanTemp(){
+    test -f $temp && rm -rf $temp
+}
+
+for args in "$@"
+do
+    case $args in
+        -H|--host)
+                host="$2"
+                shift 2
+                ;;
+        -P|--port)
+                port="$2"
+                shift 2
+                ;;
+        -i|--item)
+                item="$2"
+                shift 2
+                ;;
+        -h|--help)
+                echo -e "$usage"
+                exit 0
+                ;;
+    esac
+done
+
+GetStatus(){
+    echo "db.adminCommand({serverStatus:1})" | $mongo --host $host --port $port > $temp
+}
+
+ProcData(){
+    name="$1"
+    cat $temp | awk -F[:,\"] '/'$name'/{value=substr($4,match($4,/[0-9]/));print $2":"value}' | head -1
+    #"
+}
+
+GetStatus
+
+for g in `echo $item | tr -s "," " "`
+do  
+    case $g in
+        activeClients)
+            echo `grep -A 3 $g $temp | tail -3 | sed 's/^[ \t]*//' | sed 's/"//g' | sed 's/ : /:/g' | tr -s ",\n" " " `
+            ;;
+        connections)
+            echo `grep -A 3 $g $temp | sed 's/"//g' | sed 's/ : /:/g' | tail -3 | head -2 | tr -s ",\n" " "`
+            ;;
+        network)
+            echo `grep -A 3 $g $temp | head -4 | tail -3 | head -2 | sed 's/^[ \t]*//' | sed 's/"//g' | sed 's/ : /:/g' | tr -s ",\n" " "`  
+            ;;
+        command|update|delete|insert|getmore|query|flush)
+            res=`ProcData $g | tr -s "\n" " "`
+            results="$results $res "
+            ;;
+    esac
+done
+echo $results
+CleanTemp

@@ -1,0 +1,71 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Created by Statemood, 2013.08.27 12:00
+# Updated by Statemood, 2013.12.17 13:45
+#            Statemood@gmail.com
+#
+# Project:
+#       https://github.com/Statemood/
+# ------------------------------------------
+#                   item CPU warn crit
+# check_temperature cpu  0   70   80
+
+opts="$1"
+name="$2"
+warn="$3"
+crit="$4"
+
+ipminfo=/dev/shm/temp/ipmi-sensor.info
+
+temp_cpu(){
+    cpucores=`grep 'cpu cores' /proc/cpuinfo | uniq | awk -F ': ' '{print $2}'`
+    cpucount=`grep 'processor' /proc/cpuinfo | wc -l`
+    cpucount=`expr $cpucount / $cpucores`
+    
+    sensors | grep -A $cpucores "^Physical id $name" | sed -e 's/Physical id/CPU/' -e 's/ +//' | \
+              awk '{print $1,$2,$3}' | sed -e 's/Core.[0-9]\+:/,/' | tr -s "\n" " " | \
+              sed 's/ ,/, Cores:/'   | sed 's/ ,/,/g'
+}
+temp_cpu_var(){
+    ct=`temp_cpu`
+    temphigh=`echo $ct | awk -F '(' '{print $1}' | awk -F ':' '{print $2}' | awk -F '.' '{print $1}'`
+    tempcore=`echo $ct | awk -F 'Cores: ' '{print $2}'`
+}
+
+case $opts in 
+    cpu)
+        temp_cpu_var
+        msg="CPU $name temperature is $temphigh°C, Cores 0-`expr $cpucores - 1`: $tempcore"
+        if   [ "$temphigh" -gt "$crit" ]
+        then
+            echo -e "CRITICAL - $msg"
+            exit 2
+        elif [ "$temphigh" -gt "$warn" ]
+        then
+            echo -e "WARNING - $msg"
+            exit 1
+        else
+            echo -e "OK - $msg"
+            exit 0
+        fi
+        ;;
+        
+    ambient)
+        ambitemp=`grep "Ambient Temp" $ipminfo | awk '$4 != "na"' | awk '{print $4}' | awk -F '.' '{print $1}'`
+             msg="Ambient temperature is $ambitemp°C"
+        
+        if   [ "$ambitemp" -gt "$crit" ]
+        then
+            echo -e "CRITICAL - $msg"
+            exit 2
+        elif [ "$ambitemp" -gt "$warn" ]
+        then
+            echo -e "WARNING - $msg"
+            exit 1
+        else
+            echo -e "OK - $msg"
+            exit 0
+        fi
+        ;;
+esac

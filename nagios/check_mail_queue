@@ -1,0 +1,42 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Created by Statemood, 2013.08.27 10:00
+# Updated by Statemood, 2013.08.27 10:30
+#            Statemood@gmail.com
+#
+# Project:
+#       https://github.com/Statemood/
+# ------------------------------------------
+
+VALUE_WARN="$1"
+VALUE_CRIT="$2"
+emptymesge="Mail queue is empty"
+queuecount=`mailq | grep '^[0-9A-Z]' | grep -v "$emptymesge" | wc -l`
+
+if [ -z "$1" ]
+then
+    echo -e "$(basename $0) Required arguments"
+    echo -e "$(basename $0) wanging-value critical-value"
+    exit 3
+fi
+
+echo -en "Postfix Mail Queue: "
+if   [ "$queuecount" -gt "$VALUE_WARN" ]
+then
+    echo -en "WARNING"
+    EXIT_STATUS=1
+elif [ "$queuecount" -gt "$VALUE_CRIT" ]
+then
+    echo -en "CRITICAL"
+    EXIT_STATUS=2
+else
+    echo -en "OK"
+    EXIT_STATUS=0
+fi
+if [ "$queuecount" = "0" ]
+then
+    queuecount="$emptymesge"
+fi
+echo -e " - Queue = $queuecount"
+exit $EXIT_STATUS

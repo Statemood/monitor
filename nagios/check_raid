@@ -1,0 +1,117 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Created by Statemood, 2013.08.30 13:00
+# Updated by Statemood, 2013.09.02 16.15
+#            Statemood@gmail.com
+#
+# Project:
+#       https://github.com/Statemood/
+# ------------------------------------------
+
+opts="$1"
+disk="$2"
+warn="$3"
+crit="$4"
+line="15"
+logf=/dev/shm/temp/MegaSAS.log
+key_pfc="Predictive Failure"
+key_lpf="Last Predictive Failure Event Seq Number"
+key_str="Device Id|Media Error Count: |Other Error Count: |PD Type: |^Coerced Size:|Drive Temperature|Firmware state"
+
+get_raid_info(){
+    raid_level=`grep 'RAID Level'       $logf | awk -F 'Primary-' '{print $2}' | awk -F ',' '{print $1}'`
+    raid_diskn=`grep 'Device Id'        $logf | awk -F ': ' '{print $2}' | wc -l`
+    raid_tsize=`grep 'Size '            $logf | awk -F ': ' '{print $2}' | head -1`
+    raid_psize=`grep '^Coerced Size'    $logf | uniq | head -1 | awk -F ': ' '{print $2}' | awk '{print $1}'`
+    
+    span_count=`grep 'Number Of Drives' $logf | awk -F ':'  '{print $2}' | head -1`
+    dept_count=`grep 'Span Depth'       $logf | awk -F ':'  '{print $2}' | head -1`
+
+    if [ "$opts" = "raid" ]
+    then
+        raid_level="$disk"
+    fi
+    
+    if [ -z "$raid_psize" ]
+    then
+        raid_psize=`grep 'Mirror Data' $logf | awk -F ': ' '{print $2}'`
+    fi
+}
+
+get_di(){
+    egrep "$key_lpf|$key_pfc|$key_str" $logf | grep -A $line "^Device Id: $disk"
+}
+
+get_disk_info(){
+    get_raid_info
+    diskid=`get_di | grep "^Device Id"    | awk -F ': ' '{print $2}' | head -1`
+    errmda=`get_di | grep "^Media Error"  | awk -F ': ' '{print $2}' | head -1`
+    erroth=`get_di | grep "^Other Error"  | awk -F ': ' '{print $2}' | head -1`
+    predfc=`get_di | grep "^Predictive F" | awk -F ': ' '{print $2}' | head -1`
+    predsn=`get_di | grep "^Last Predict" | awk -F ': ' '{print $2}' | head -1`
+    pdtype=`get_di | grep "^PD Type:"     | awk -F ': ' '{print $2}' | head -1`
+    pdsize=`get_di | grep "^Coerced Size" | awk -F ': ' '{print $2}' | awk -F ' ' '{print $1,$2}' | head -1`
+    temper=`get_di | grep "Temperature"   | awk -F ':'  '{print $2}' | awk -F 'C' '{print $1}'    | head -1`
+    status=`get_di | grep "^Firmware sta" | awk -F ': ' '{print $2}' | awk -F ',' '{print $1}'    | head -1`
+  fail_pfc=`get_di | grep "^$key_pfc"     | awk -F ': ' '{print $2}' | head -1`
+  fail_lpf=`get_di | grep "^$key_lpf"     | awk -F ': ' '{print $2}' | head -1`
+}
+
+Print_msg(){
+    msg="- Disk $diskid $2"
+    if [ "$1" -gt "$crit" ]
+    then
+        echo -e "CRITICAL $msg"
+        exit 2
+    elif [ "$1" -ge "$warn" ]
+    then
+        echo -e "WARNING $msg"
+        exit 1
+    elif [ "$1" -lt "$warn" ]
+    then
+        echo -e "OK $msg"
+        exit 0
+    else
+        echo -e "UNKNOWN - Could not fetch information from server"
+        exit 3
+    fi
+}
+get_disk_info
+
+case $1 in
+    raid)
+        get_raid_info
+        echo -e "RAID Level:$raid_level, Devices:$raid_diskn, Disk Size:$raid_psize, Total Size:$raid_tsize"
+        ;;
+    disk)
+        msg="- Disk $diskid Status:$status(Type:$pdtype, Size:$pdsize)"
+        if   [ "$status" = "Online" ]
+        then
+            echo -e "OK $msg"
+            exit 0
+        elif [ "$status" = "Offline" ]
+        then
+            echo -e "CRITICAL $msg"
+            exit 2
+        else
+            echo -e "UNKNOWN - Could not fetch information from server"
+            exit 3
+        fi
+        ;;
+    temp)
+        Print_msg "$temper" "Temperature is $temper°C"
+        ;;
+    err_media)
+        Print_msg "$errmda" "Media Error Count: $errmda"
+        ;;
+    err_other)
+        Print_msg "$erroth" "Other Error Count: $erroth"
+        ;;
+    fail_lpf)
+        Print_msg "$fail_lpf" "$key_lpf: $fail_lpf"
+        ;;
+    fail_pfc)
+        Print_msg "$fail_pfc" "$key_pfc count: $fail_pfc"
+        ;;
+esac

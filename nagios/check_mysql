@@ -1,0 +1,52 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Created by Statemood, 2013.08.18 12:35
+# Updated by Statemood, 2013.08.15 13:30
+#            Statemood@gmail.com
+#
+# Project:
+#       https://github.com/Statemood/
+# ------------------------------------------
+
+   cmd='/usr/local/mysql/bin/mysql'
+hostip=''
+  user=''
+  pswd=''
+  temp=`mktemp /dev/shm/XXXXXXXXXXXXXXXXXXXX`
+
+DBQuery(){
+    $cmd -h $hostip -u $user -p$pswd -e "$1" 2> /dev/null
+}
+
+DBQuery "show global status"    >  $temp
+DBQuery "show variables"        >> $temp
+    
+                t=`grep '^Uptime' $temp | head -1 | awk '{print $2}'`
+           uptime=`date -d "@$t" +'%d days %T'`
+          queries=`grep '^Queries' $temp | awk '{print $2}'`
+    max_user_conn=`grep '^max_user_conn'  $temp | awk '{print $2}'`
+   max_connection=`grep '^max_connection' $temp | awk '{print $2}'`
+     connect_used=`echo "scale=2;$max_user_conn / $max_connection" | bc`
+    echo $connect_used | grep -q '^.'  && connect_used=0$connect_used
+    
+        tmp_table=`grep Created_tmp_tables      $temp | awk '{print $2}'`
+   tmp_table_disk=`grep Created_tmp_disk_tables $temp | awk '{print $2}'`
+   tmp_table_cret=`echo "scale=2;$tmp_table / $tmp_table_disk" | bc`
+    echo $tmp_table_cret | grep -q '^.' && tmp_table_cret=0$tmp_table_cret
+    
+      open_tables=`grep 'Open_tables'      $temp | awk '{print $2}'`
+    opened_tables=`grep 'Opened_tables'    $temp | awk '{print $2}'`
+    open_tables_c=`grep 'table_open_cache' $temp | awk '{print $2}'`
+    
+        
+          threads=`grep 'Threads_created'  $temp | awk '{print $2}'`
+    
+
+case $1 in
+    status)
+        echo "OK - $uptime. $threads threads. Connections used $connect_used%(<85%,). Created tmp tables $tmp_table, on disk $tmp_table_cret%(<25%). "
+        ;;
+esac
+
+rm -rf $temp

@@ -1,0 +1,71 @@
+#! /bin/bash
+
+# ------------------------------------------
+# 
+# Created by Statemood, 2013.12.19 14:30
+# Updated by Statemood, 2013.12.19 17:00
+#            Statemood@gmail.com
+#
+# Project mgutils:
+#    https://github.com/Statemood/nagios-plugs
+# ------------------------------------------
+
+  item="$1"
+  warn="$2"
+  crit="$3"
+  host="$4"
+  link="$5"
+ minac="50"
+  temp=/dev/shm/temp/nagios
+  stat=`mktemp $temp/XXXXXXXXXX`                                                                                                                                  
+test -d $temp || mkdir $temp                                                                                                                                      
+cd $temp                                                                                                                                                          
+                                                                                                                                                                  
+usage(){                                                                                                                                                          
+    echo -e "Usage: $0 item warn-value crit-value host link"                                                                                                      
+    exit $1
+}
+
+test "X$item" = "X" && usags
+test "$#" -lt 5     && usage
+
+get_stats(){
+    curl  --connect-timeout 5 --retry 1 -s $host/$link > $stat
+
+    nhash=`echo $host | md5sum | awk '{print $1}'`
+    newac=`head -1 $stat | awk '{print $3}'`
+    newwa=`tail -1 $stat | awk '{print $6}'`
+    otime=`cat $nhash | awk '{print $1}'`
+    otime=$(echo `date +%s` - $otime | bc)
+    oldac=`cat $nhash | awk '{print $2}'`
+    oldwa=`cat $nhash | awk '{print $3}'`
+    
+    warn_ac=`echo "$newac * 0.01 * $warn + $oldac" | bc | awk -F '.' '{print $1}'`
+    crit_ac=`echo "$newac * 0.01 * $crit + $oldac" | bc | awk -F '.' '{print $1}'`
+            
+    warn_wa=`echo "$newac * 0.01 * $warn + $newwa" | bc | awk -F '.' '{print $1}'`
+    crit_wa=`echo "$newac * 0.01 * $crit + $newwa" | bc | awk -F '.' '{print $1}'`
+
+    echo "`date +%s` $newac $newwa" > $nhash
+    test -f "$stat" && rm -rf $stat
+}
+
+
+case $item in
+    ac)
+        get_stats
+        ac_msg="Nginx Current Active Connections of $host: $newac, Last Check at `date -d @$otime +%-M` minutes ago: $oldac"
+        if   [ $newac -ge $crit_ac ] && [ $newac -ge $minac ]
+        then
+            echo -e "CRITICAL - $ac_msg"
+            exit 2
+        elif [ $newac -ge $warn_ac ] && [ $newac -ge $minac ]
+        then
+            echo -e "WARNING - $ac_msg"
+            exit 1
+        else
+            echo -e "OK - $ac_msg"
+            exit 0
+        fi
+        ;;
+esac
