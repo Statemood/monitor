@@ -1,2 +1,2 @@
 # monitor
-Project of cacti &amp; Nagios monitor scripts
+cacti & Nagios & Zabbix monitor scripts
