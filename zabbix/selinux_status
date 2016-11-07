@@ -1,0 +1,34 @@
+#! /bin/bash
+
+# --------------------------------------------------
+# Project monitor: 
+#       https://github.com/Statemood/monitor
+#
+# Created by Statemood, 2016-11-07
+#
+# --------------------------------------------------
+
+
+results(){
+    res="`sestatus | grep \"$se_key\" | awk -F ':' '{print $2}' | awk '{print $1}'`"
+    
+    test "$res" = "$se_set" && echo 0 || echo 1
+}
+
+case "$1" in
+    status)
+        se_key="^SELinux status"
+        se_set="enabled"
+        results
+        ;;
+    mode_current)
+        se_key="^Current mode"
+        se_set="enforcing"
+        results
+        ;;
+    mode_config)
+        se_key="^Mode from config file"
+        se_set="enforcing"
+        results
+        ;;
+esac
