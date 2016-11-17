@@ -7,7 +7,11 @@
 #
 # --------------------------------------------------
 
-curl=/usr/local/server/curl/bin/curl
+# Usage:
+#   check_http --host 11 --ip 22 --port 33 --item <arguments for curl -w> --url <optional> 
+
+
+curl=/usr/local/curl/bin/curl
 test -x $curl || curl=curl
 
 port=80
