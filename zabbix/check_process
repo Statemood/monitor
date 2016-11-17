@@ -21,7 +21,7 @@ Usage(){
 }
 
 Proc(){
-    ps aux | grep "[$name_head]$name_tail " 
+    ps aux | grep "[$name_head]$name_tail" 
 }
 
 for arg in "$@"
