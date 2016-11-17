@@ -1,0 +1,48 @@
+#! /bin/bash
+
+# --------------------------------------------------
+# Project monitor:
+#       https://github.com/Statemood/monitor
+#
+#
+# --------------------------------------------------
+
+curl=/usr/local/server/curl/bin/curl
+test -x $curl || curl=curl
+
+port=80
+opts="--max-time 5 --retry 3 --retry-delay 1 -o /dev/null -s"
+
+if [ "$#" -lt 4 ]
+then
+    echo 1
+    exit 1
+fi
+for arg in "$@"
+do
+    case $arg in
+        --host)
+            host="$2"
+            shift 2
+            ;;
+        --ip)
+            ipaddress="$2"
+            shift 2
+            ;;
+        --port)
+            port="$2"
+            shift 2
+            ;;
+        --item)
+            item="$2"
+            shift 2
+            ;;
+        --url)
+            url="$2"
+            ;;
+    esac
+done
+
+test $port = 443 && protocols=https || protocols=http
+
+$curl --resolve $host:$port:$ipaddress $protocols://$host:${port}${url} $opts -w %{$item}
