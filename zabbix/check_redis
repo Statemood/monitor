@@ -1,0 +1,41 @@
+#! /bin/bash
+
+# --------------------------------------------------
+# Project monitor:
+#       https://github.com/Statemood/monitor
+#
+#
+# --------------------------------------------------
+
+#
+
+redis_port=6379
+redis_exec=redis-cli
+
+redisCmd(){
+    $redis_exec -h $host -p $redis_port
+}
+
+for arg in "$@"
+do
+    case $arg in
+        -h|--host)
+            host="$2"
+            shift 2
+            ;;
+        -p|--port)
+            redis_port="$2"
+            shift 2
+            ;;
+        -i|--item)
+            item="$2"
+
+            if [ "$item" = "PING" ]
+            then
+                echo "PING" | redisCmd
+            else
+                echo "info" | redisCmd | grep "$item" | awk -F ':' '{print $2}'
+            fi
+            ;;
+    esac
+done
