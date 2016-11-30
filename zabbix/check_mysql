@@ -1,0 +1,42 @@
+#! /bin/bash
+
+# --------------------------------------------------
+# Project monitor:
+#       https://github.com/Statemood/monitor
+#
+# --------------------------------------------------
+
+#
+# check_mysql -h host --port port -u user -p password -i item
+
+port=3306
+user="zabbix"
+exec="/usr/local/bin/mysql"
+
+for arg in "$@"
+do
+    case $arg in
+        -h|--host)
+            host="$2"
+            shift 2
+            ;;
+        --port)
+            port=$2
+            shift 2
+            ;;
+        -u|--user)
+            user="$2"
+            shift 2
+            ;;
+        -p|--password)
+            password="$2"
+            shift 2
+            ;;
+        -i|--item)
+            item="$2"
+            ;;
+    esac
+done
+
+$exec -h $host -u $user --port $port -p$password -e "show status like '$item';" 2> /dev/null |\
+    awk '{print $2}' | tail -1

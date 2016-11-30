@@ -1,0 +1,32 @@
+#! /bin/bash
+
+# --------------------------------------------------
+#       https://github.com/Statemood/monitor
+#
+# --------------------------------------------------
+
+#
+
+mongo_exec=mongo
+mongo_opts=""
+
+allowed_keys="opcounters"
+ignored_keys="^MongoDB shell|^connecting to|^bye"
+preproc_keys="NumberLong"
+
+value=`echo "db.serverStatus().$1" | $mongo_exec $mongo_opts | egrep -v "$ignored_keys"`
+
+case $1 in 
+    localTime)
+        echo $value | awk -F '"' '{print $2}' | tr -s TZ " "
+        exit 0
+        ;;    
+    mem*)
+        test "$1" = "mem.bits" && echo $value || echo "$value * 1024" | bc
+        exit 0
+        ;;
+esac
+
+echo $value | egrep -iq "$preproc_keys"
+
+test $? = 0 && echo $value | awk -F '"' '{print $2}' || echo $value
