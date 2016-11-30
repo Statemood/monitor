@@ -51,7 +51,7 @@ do
             then
                 echo "PING" | redisCmd | grep -q "PONG"
                 test $? = 0 && echo 0 || echo 1
-            elif [ "$item" = "db0.keys" ]
+            elif [ "$item" = "db0" ]
             then
                 GetData | awk -F ',' '{print $1}' | awk -F '=' '{print $2}'
             else

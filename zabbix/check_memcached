@@ -1,0 +1,40 @@
+#! /usr/bin/env python
+
+#coding=utf8
+
+import os
+import sys
+
+host = sys.argv[1]
+port = sys.argv[2]
+
+conn = host + ':' + port
+key  = sys.argv[3]
+
+class GetMemStatus():
+    def __init__(self):
+        self.val = {}
+
+    def check(self):
+        try:
+            import memcache
+            self.mc = memcache.Client([conn], debug=0)
+        except:
+            raise Exception, 'Please install the memcache plugin'
+
+    def extract(self, key):
+        stats = self.mc.get_stats()
+        try:
+            if key in stats[0][1]:
+                self.val[key] = stats[0][1][key]
+            return self.val[key]
+        except:
+            raise Exception, 'Error: not found key in stats'
+
+def main():
+        a    = GetMemStatus()
+        a.check()
+        print a.extract(key)
+
+if __name__ == "__main__":
+    main()
