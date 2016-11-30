@@ -2,7 +2,7 @@
 
 ## Get stats from memcached for Zabbix
 
-* Usage
+    
     check_memcached host-or-ip port key
 
 ***
