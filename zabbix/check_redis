@@ -7,40 +7,59 @@
 #
 # --------------------------------------------------
 
-#
-
 redis_port=6379
 redis_exec=redis-cli
 
-
 Usage(){
-
+    helpmsg="
+        \033[1m$(basename $0)\033[0m
+        -h, --host <address>    Hostname or IP Address
+        -p, --port <port>       Redis port
+        -i, --item <key>        'PING' and all of the redis 'info' stats
+            --help              Display this message
+    "
+    echo -e "$helpmsg"
+    exit
 }
 
 redisCmd(){
     $redis_exec -h $host -p $redis_port
 }
 
+GetData(){
+    echo "info" | redisCmd | grep "^$item:" | awk -F ':' '{print $2}'
+}
+
 for arg in "$@"
 do
     case $arg in
         -h|--host)
+            test -z "$2" && Usage
             host="$2"
             shift 2
             ;;
         -p|--port)
+            test -z "$2" && Usage
             redis_port="$2"
             shift 2
             ;;
         -i|--item)
             item="$2"
+            test -z "$2" && Usage
 
             if [ "$item" = "PING" ]
             then
-                echo "PING" | redisCmd
+                echo "PING" | redisCmd | grep -q "PONG"
+                test $? = 0 && echo 0 || echo 1
+            elif [ "$item" = "db0.keys" ]
+            then
+                GetData | awk -F ',' '{print $1}' | awk -F '=' '{print $2}'
             else
-                echo "info" | redisCmd | grep "^$item:" | awk -F ':' '{print $2}'
+                GetData
             fi
+            ;;
+        -*|--help)
+            Usage
             ;;
     esac
 done
