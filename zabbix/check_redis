@@ -12,6 +12,11 @@
 redis_port=6379
 redis_exec=redis-cli
 
+
+Usage(){
+
+}
+
 redisCmd(){
     $redis_exec -h $host -p $redis_port
 }
@@ -34,7 +39,7 @@ do
             then
                 echo "PING" | redisCmd
             else
-                echo "info" | redisCmd | grep "$item" | awk -F ':' '{print $2}'
+                echo "info" | redisCmd | grep "^$item:" | awk -F ':' '{print $2}'
             fi
             ;;
     esac
