@@ -290,7 +290,7 @@
                     <snmp_community/>
                     <multiplier>0</multiplier>
                     <snmp_oid/>
-                    <key>check.redis[db0.keys]</key>
+                    <key>check.redis[db0]</key>
                     <delay>60</delay>
                     <history>90</history>
                     <trends>365</trends>
