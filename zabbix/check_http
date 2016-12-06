@@ -8,7 +8,7 @@
 # --------------------------------------------------
 
 # Usage:
-#   check_http --host 11 --ip 22 --port 33 --item <arguments for curl -w> --url <optional> 
+#   check_http --host 11 --ip 22 --port 33 --item <arguments for curl -w> --url <optional>
 
 
 curl=/usr/local/curl/bin/curl

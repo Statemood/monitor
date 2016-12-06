@@ -3,7 +3,6 @@
 # --------------------------------------------------
 #       https://github.com/Statemood/monitor
 #
-#
 # --------------------------------------------------
 
 #
@@ -21,32 +20,27 @@ Usage(){
     echo "$mesg"
 }
 
-GetProc(){
-    ps aux | grep "$keywords" | grep -v "$(basename $0)"
-}
-
-PrintProc(){
-    proc_name=`ps ax | grep "$keywords" | awk '{print $5}'`
+Proc(){
+    ps aux | grep "[$name_head]$name_tail" | grep -v "$(basename $0)"
 }
 
 for arg in "$@"
 do
     case "$arg" in
         -n|--name)
-            name_full="`echo $@ | awk -F '--name' '{print $2}' | awk -F '--item' '{print $1}'`"
+            name_full="$2"
             name_head="`echo $name_full | cut -c 1`"
             name_tail="`echo $name_full | cut -c 2-`"
 
-            keywords="[$name_head]$name_tail"
             shift 2
             ;;
 
         -i|--item)
             item="$2"
 
-            [ "$item" = "count" ]  && Proc | wc -l | awk '{print $1}'
-            [ "$item" = "cpu" ]    && Proc | awk '{sum += $3} END {print sum}'
-            [ "$item" = "memory" ] && Proc | awk '{sum += $4} END {print sum}'
+            test "$item" = "count"   && Proc | wc -l | awk '{print $1}'
+            test "$item" = "cpu"     && Proc | awk '{sum += $3} END {print sum}'
+            test "$item" = "memory"  && Proc | awk '{sum += $4} END {print sum}'
             ;;
         -h|--help)
             Usage

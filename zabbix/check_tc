@@ -1,0 +1,33 @@
+#! /bin/sh
+
+# --------------------------------------------------
+#       https://github.com/Statemood/monitor
+#
+# --------------------------------------------------
+
+#
+
+    key="$1"
+   temp=`mktemp /dev/shm/XXXXXXXXXXXX`
+allowed="CLOSE_WAIT ESTABLISHED FIN_WAIT LAST_ACK LISTEN TIME_WAIT SYN_RECV"
+
+netstat -an | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}' > $temp
+
+for k in $allowed
+do
+    echo $data    | grep -q $k
+    test $? != 0 && echo "$k 0" >> $temp
+done
+
+echo -e '{\n\t"data":['
+
+while read tck tcv
+do
+    echo -e "\t\t{\n\t\t\t\"{#TCPKEY}\":\"$tck\","
+    echo -e "\t\t\t\"{#TCPVAL}\":\"$tcv\"\n\t\t}"
+
+done < $temp
+
+echo -e '\t]\n}'
+
+test -f $temp && rm -f $temp

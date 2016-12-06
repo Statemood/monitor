@@ -1,0 +1,22 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+argv="$1"
+
+data(){
+    sensors | grep "^Core $core:" | awk -F '+' '{print $2}' | awk -F '.' '{print $1}'
+}
+
+case "$argv" in
+    temp*)
+        #CoreA0
+         cpu="`echo $argv | cut -c 5`"
+        core="`echo $argv | cut -c 6-`"
+
+        test "$cpu" = "A" && data | head -1 || data | tail -1
+        ;;
+esac

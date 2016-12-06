@@ -1,0 +1,25 @@
+#! /bin/sh
+
+# --------------------------------------------------
+#       https://github.com/Statemood/monitor
+#
+# --------------------------------------------------
+
+#
+
+    key="$1"
+allowed="CLOSE_WAIT|ESTABLISHED|FIN_WAIT_1|FIN_WAIT_2|LAST_ACK|LISTEN|TIME_WAIT|SYN_RECV"
+
+Counter(){
+    number=`netstat -an                                             |\
+            awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}' |\
+            grep "^$key"                                            |\
+            awk '{print $2}'`
+
+    test -z "$number" && number=0
+    echo $number
+}
+
+echo $key | egrep -q "$allowed"
+
+test $? = 0 && Counter || echo "Allowed: `echo $allowed | tr -s '|' ' '`"
