@@ -5,6 +5,9 @@
 #       https://github.com/Statemood/monitor
 # ------------------------------------------
 
+# line of the disk info filtered by '^Solt Number: X'
+di_line=45
+
 megacli=/usr/local/bin/megacli
 
 disk_info=/dev/shm/disk.info
