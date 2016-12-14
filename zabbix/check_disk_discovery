@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+#coding=utf-8
+
+import os
+import json
+
+megaopt = " -PDList –a0 -NoLog "
+megacli = "/usr/local/bin/megacli"
+
+t       = os.popen("sudo " + megacli + megaopt + " | grep '^Slot Number' | awk -F ': ' '{print $2}'""")
+
+disks = []
+for disk in  t.readlines():
+        r = os.path.basename(disk.strip())
+        disks += [{'{#DISK}':r}]
+print json.dumps({'data':disks},sort_keys=True,indent=4,separators=(',',':'))

@@ -5,9 +5,51 @@
 #       https://github.com/Statemood/monitor
 # ------------------------------------------
 
-raid_info=/dev/shm/MegaSAS.log
-disk_info=/dev/shm/disk.info
+raid_info=/dev/shm/raid.info
 
-get_info(){
-
+DCIF(){
+    grep -A 5 '^Physical Devices' $raid_info
 }
+
+# RAID INFO: filter
+RIF(){
+    grep "^$key" $raid_info | awk -F ': ' '{print $2}'
+}
+
+case $1 in
+    disk_critical)
+            DCIF | grep 'Critical'   | awk -F ': ' '{print $2}'
+            exit
+            ;;
+    disk_failed)
+            DCIF | grep 'Failed'     | awk -F ': ' '{print $2}'
+            exit
+            ;;
+    disk_total)
+            DCIF | head -2 | tail -1 | awk -F ': ' '{print $2}'
+            exit
+            ;;
+    pn)     key="Product Name"           ;;
+    sn)     key="Serial No"              ;;
+    nbp)    key="Number of Backend Port" ;;
+    mem)    key="Memory Size"
+            RIF | tr -s "A-Z" " "
+            exit 0
+            ;;
+    mce)    key="Memory Correctable Errors"     ;;
+    mue)    key="Memory Uncorrectable Errors"   ;;
+    rt)     key="ROC temperature"
+            RIF | awk '{print $1}'
+            exit 0
+            ;;
+    tc)     key="Controller temperature"
+            RIF | awk '{print $1}'
+            exit 0
+            ;;
+    ct)     key="Current Time"
+            RIF | awk '{print $3"-"$2,$1}' | tr "/" "-" | sed 's/,//'
+            exit 0
+            ;;
+esac
+
+RIF

@@ -1,0 +1,79 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+# line of the disk info filtered by '^Solt Number: X'
+disk_line=45
+disk_info=/dev/shm/disk.info
+
+# DISK DETAILS: filter
+DiskInfo(){
+    grep -A $disk_line "^Slot Number: $slot_number" $disk_info  |\
+    grep "^$key"                                                |\
+    awk -F ':' '{print $2}'                                     |\
+    sed 's/^ //'
+}
+
+for arg in "$@"
+do
+    case $arg in
+        slot)
+            slot_number="$2"
+            shift 2
+            ;;
+        item)
+            case $2 in
+                connected_port)
+                    key="Connected Port Number"
+                    DiskInfo | awk -F '(' '{print $1}'
+                    exit
+                    ;;
+                device_id)
+                    key="Device Id" ;;
+                temperature)
+                    key="Drive Temperature"
+                    DiskInfo | awk -F 'C' '{print $1}'
+                    exit
+                    ;;
+                firmware_state)
+                    key="Firmware state"
+                    DiskInfo | awk -F ',' '{print $1}'
+                    exit
+                    ;;
+                inquiry_data)
+                    key="Inquiry Data"
+                    DiskInfo | tr -s " " ","  | sed 's/,$//' | sed 's/,/ /g'
+                    exit
+                    ;;
+                last_predictive_failure)
+                    key="Last Predictive Failure Event Seq Number"  ;;
+                predictive_failure)
+                    key="Predictive Failure Count"                  ;;
+                media_error)
+                    key="Media Error Count" ;;
+                other_error)
+                    key="Other Error Count" ;;
+                media_type)
+                    key="Media Type"        ;;
+                pd_type)
+                    key="PD Type"           ;;
+                raw_size)
+                    key="Raw Size"
+                    DiskInfo | awk '{print $2}'
+                    exit
+                    ;;
+                shield_counter)
+                    key="Shield Counter"    ;;
+                slot_number)
+                    key="Slot Number"       ;;
+                wwn)
+                    key="WWN"               ;;
+            esac
+
+            DiskInfo
+            ;;
+    esac
+done
