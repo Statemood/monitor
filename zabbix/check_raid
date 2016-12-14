@@ -1,0 +1,13 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+raid_info=/dev/shm/MegaSAS.log
+disk_info=/dev/shm/disk.info
+
+get_info(){
+
+}

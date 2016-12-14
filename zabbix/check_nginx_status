@@ -1,0 +1,47 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+# $0 --url URL --item xxx
+
+port=80
+host="localhost"
+
+request(){
+    curl -s http://$host:$port$url
+}
+
+for arg in "$@"
+do
+    case $arg in
+        -h|--host)
+            host="$2"
+            shift 2
+            ;;
+        -p|--port)
+            port="$2"
+            shift 2
+            ;;
+        -u|--url)
+            url="$2"
+            shift 2
+            ;;
+        -i|--item)
+            item="$2"
+            shift 2
+            ;;
+    esac
+done
+
+case $item in
+    reading)        request | tail -1 | awk '{print $2}'    ;;
+    writing)        request | tail -1 | awk '{print $4}'    ;;
+    waiting)        request | tail -1 | awk '{print $6}'    ;;
+    active)         request | head -1 | awk '{print $3}'    ;;
+    connections)    request | tail -2 | head -1 | awk '{print $1}'  ;;
+    handled)        request | tail -2 | head -1 | awk '{print $2}'  ;;
+    requests)       request | tail -2 | head -1 | awk '{print $3}'  ;;
+esac

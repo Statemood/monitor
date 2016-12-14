@@ -7,9 +7,9 @@ import sys
 
 host = sys.argv[1]
 port = sys.argv[2]
+key  = sys.argv[3]
 
 conn = host + ':' + port
-key  = sys.argv[3]
 
 class GetMemStatus():
     def __init__(self):
