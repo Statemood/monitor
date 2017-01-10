@@ -1,0 +1,12 @@
+# service name:host:ip:port:http_code:url
+#
+# service name
+# Host          domain, default(empty) use ip
+# IP            ip address, default is empty
+# PORT          default is 80
+# http_code     default is 200
+# url           default is '/'
+
+# 192.168.1.150, 151, 152, 153
+API Service:192.168.1.150-153::::
+:www.abc.com:192.168.1.100:8080:403:/not-index.html

@@ -1,0 +1,49 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+data(){
+    iostat -p -x -k | grep "^$disk " | awk "{print \$$num}"
+}
+
+for arg in "$@"
+do
+    case $arg in
+        --disk)
+            disk="$2"
+            shift 2
+            ;;
+        --item)
+            case $2 in
+                rrqms)      num=2   ;;
+                wrqms)      num=3   ;;
+                rs)         num=4   ;;
+                ws)         num=5   ;;
+
+                rkbs)       # Set units to B for Zabbix
+                            num=6
+                            echo "scale=2;`data` * 1024" | bc
+                            exit
+                            ;;
+
+                wkbs)       # Set units to B for Zabbix
+                            num=7
+                            echo "scale=2;`data` * 1024" | bc
+                            exit
+                            ;;
+                avgrq)      num=8   ;;
+                avgqu)      num=9   ;;
+                await)      num=10  ;;
+                rawait)     num=11  ;;
+                wawait)     num=12  ;;
+                svctm)      num=13  ;;
+                util)       num=14  ;;
+            esac
+            ;;
+    esac
+done
+
+data

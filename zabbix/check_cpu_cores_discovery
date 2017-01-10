@@ -1,0 +1,38 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+gen_data(){
+     cpus="`grep '^physical id' /proc/cpuinfo | sort | uniq | awk -F ': ' '{print $2}'`"
+    cores="`sensors | grep '^Core ' | awk -F ':' '{print $1}' | awk '{print $2}' | sort -n | uniq`"
+
+    for cpu in $cpus
+    do
+        for core in $cores
+        do
+            echo "${cpu}_${core}"
+        done
+    done
+}
+
+data=(`gen_data`)
+
+len=${#data[@]}
+
+printf "{\n"
+printf  '\t'"\"data\":["
+for ((i=0;i<$len;i++))
+do
+        printf '\n\t\t{'
+        printf "\"{#COREID}\":\"${data[$i]}\"}"
+        if [ $i -lt $[$len-1] ]
+        then
+            printf ','
+        fi
+done
+
+printf  "\n\t]\n"
+printf "}\n"

@@ -1,0 +1,80 @@
+#! /bin/bash
+
+# --------------------------------------------------
+# Project monitor:
+#       https://github.com/Statemood/monitor
+#
+#
+# --------------------------------------------------
+# service:abc.com:192.168.1.100:8080:302:/api
+#
+# host=xyz.com, ip=use dns, port=default is 80, http_code=default is 200, uri=default is '/'
+# :xyz.com:::::
+#
+# host=default use ip, ip=192.168.1.20,21,22,23, port=default, http_code=default, uri=/api
+# ::192.168.1.20-23:::/api
+
+ count=1
+  temp=`mktemp /dev/shm/XXXXXXXXXXXX`
+config="$(dirname $(dirname $0))/etc/http-discovery.list"
+
+if [ ! -f "$config" ]
+then
+    echo "Error: config file not found"
+    exit 1
+fi
+
+printf  '{\n\t'"\"data\":["
+
+grep -v "^#" $config | sed '/^$/d' |\
+while read line
+do
+    serv="`echo $line | awk -F ':' '{print $1}'`"
+    host="`echo $line | awk -F ':' '{print $2}'`"
+      ip="`echo $line | awk -F ':' '{print $3}'`"
+    port="`echo $line | awk -F ':' '{print $4}'`"
+    code="`echo $line | awk -F ':' '{print $5}'`"
+     uri="`echo $line | awk -F ':' '{print $6}'`"
+
+    test -z "$host" && host=0
+    test -z "$ip"   &&   ip=0
+    test -z "$port" && port=80
+    test -z "$code" && code=200
+    test -z "$uri"  &&  uri="/"
+
+    test "$ip" = "$host" && test "$ip" = 0 && continue
+
+    # for 192.168.1.10-20
+    echo "$ip" | egrep -q "\-"
+    if [ $? = 0 ]
+    then
+        # 192.168.1.10
+        ip_full="`echo $ip  | awk -F '-' '{print $1}'`"
+        # get 192.168.1 of 192.168.1.10-xxx
+        ip_head="`echo $ip_full | awk -F '.' '{print $1,$2,$3}' | sed 's/ /./g'`"
+        # transfer 10-20 to 10 and 20
+        ip_range1="`echo $ip | awk -F '.' '{print $4}' | awk -F '-' '{print $1}'`"
+        ip_range2="`echo $ip | awk -F '.' '{print $4}' | awk -F '-' '{print $2}'`"
+
+        for ((i=$ip_range1; i<=$ip_range2; i++))
+        do
+            echo "{\"{#HTTP.SERVICE}\": \"$serv\", \"{#HTTP.HOST}\": \"$host\", \"{#HTTP.IP}\": \"$ip_head.$i\", \"{#HTTP.PORT}\": $port, \"{#HTTP.CODE}\": $code, \"{#HTTP.URI}\": \"$uri\"}" >> $temp
+        done
+    fi
+done
+
+total=`wc -l $temp | awk '{print $1}'`
+while read line
+do
+    if [ $count = $total ]
+    then
+        echo "$line"
+    else
+        echo "$line,"
+        echo $((count++)) > /dev/null
+    fi
+done < $temp
+
+printf  "\n\t]\n}\n"
+
+test -f "$temp" && rm -rf "$temp"

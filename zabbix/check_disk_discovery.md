@@ -1,12 +1,7 @@
 #RAID info discovery
 
 
-MegaCli 需要 root 权限才能获取相关数据，因此需要对sudo进行配置。
- /etc/sudoer settings:  
+需要 root 通过 crontab 来更新 raid & disk 信息
 
- >`Cmnd_Alias MEGACLIDISK = /usr/local/bin/megacli -PDList –a0`  
- >`Cmnd_Alias MEGACLIRAID = /usr/local/bin/megacli -adpallinfo -a0`  
- >`zabbix    ALL=(ALL)   NOPASSWD: MEGACLIDISK, MEGACLIRAID`  
-
-###⚠️ 注意
-+ MegaCli 可以控制RIAD卡，因此不要配置并允许上述之外的参数。
+> * * * * *     root    /usr/local/bin/megacli -PDList –a0 -NoLog > /dev/shm/disk.info
+> * * * * *     root    /usr/local/bin/megacli -adpallinfo -a0    > /dev/shm/raid.info

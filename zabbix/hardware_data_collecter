@@ -1,0 +1,27 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+# MegaCli
+# IPMI 
+
+temp=/dev/shm
+mega=/usr/local/bin/megacli
+ipmi=/usr/bin/ipmitool
+
+ignorekey="Not Readable|no reading|0x[a-z0-9]+"
+
+disk_info=$temp/disk.info
+raid_info=$temp/raid.info
+ipmi_info=$temp/ipmi.info
+ bbu_info=$temp/bbu.info
+
+$mega -PDList –a0 -NoLog            > $disk_info
+$mega -adpallinfo -a0 -NoLog        > $raid_info
+
+$ipmi sdr | egrep -v "$ignorekey"   > $ipmi_info
+
+$mega -AdpBbuCmd -aALL -NoLog       > $bbu_info

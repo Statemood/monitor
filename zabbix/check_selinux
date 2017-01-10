@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # --------------------------------------------------
-# Project monitor: 
+# Project monitor:
 #       https://github.com/Statemood/monitor
 #
 # Created by Statemood, 2016-11-07
@@ -10,9 +10,11 @@
 
 
 results(){
-    res="`sestatus | grep \"$se_key\" | awk -F ':' '{print $2}' | awk '{print $1}'`"
-    
-    test "$res" = "$se_set" && echo 0 || echo 1
+    stat="`sestatus | grep '^SELinux status' | awk -F ':' '{print $2}' | awk '{print $1}'`"
+     res="`sestatus | grep \"$se_key\" | awk -F ':' '{print $2}' | awk '{print $1}'`"
+
+    #test "$res" = "$se_set" && echo 0 || echo 1
+    echo "$res"
 }
 
 case "$1" in

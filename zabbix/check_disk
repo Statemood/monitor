@@ -62,7 +62,7 @@ do
                     key="PD Type"           ;;
                 raw_size)
                     key="Raw Size"
-                    DiskInfo | awk '{print $2}'
+                    DiskInfo | awk '{print $1}'
                     exit
                     ;;
                 shield_counter)

@@ -19,7 +19,7 @@ opts="--max-time 5 --retry 3 --retry-delay 1 -o /dev/null -s"
 
 if [ "$#" -lt 4 ]
 then
-    echo 1
+    echo 100001
     exit 1
 fi
 for arg in "$@"
@@ -30,7 +30,7 @@ do
             shift 2
             ;;
         --ip)
-            ipaddress="$2"
+            ip="$2"
             shift 2
             ;;
         --port)
@@ -47,6 +47,8 @@ do
     esac
 done
 
-test $port = 443 && protocols=https || protocols=http
+test $port = 443 && protocol=https || protocol=http
 
-$curl --resolve $host:$port:$ipaddress $protocols://$host:${port}${url} $opts -w %{$item}
+test "$ip" = "0" || resolve="--resolve $host:$port:$ip"
+
+$curl $resolve $protocol://$host:${port}${url} $opts -w %{$item}

@@ -6,6 +6,7 @@
 # ------------------------------------------
 
 raid_info=/dev/shm/raid.info
+ bbu_info=/dev/shm/bbu.info
 
 DCIF(){
     grep -A 5 '^Physical Devices' $raid_info
@@ -39,11 +40,15 @@ case $1 in
     mce)    key="Memory Correctable Errors"     ;;
     mue)    key="Memory Uncorrectable Errors"   ;;
     rt)     key="ROC temperature"
-            RIF | awk '{print $1}'
+            res=`RIF | awk '{print $1}'`
+
+            test -z "$res" && echo 0 || echo $res
             exit 0
             ;;
     tc)     key="Controller temperature"
-            RIF | awk '{print $1}'
+            res=`RIF | awk '{print $1}'`
+
+            test -z "$res" && echo 0 || echo $res
             exit 0
             ;;
     ct)     key="Current Time"

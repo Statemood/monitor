@@ -1,0 +1,36 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Created by Statemood, 2014.07.03 15:30
+# Updated by Statemood, 2014.07.04 12:00
+#            Statemood@gmail.com
+#
+# Project nagios-plugins:
+#       https://github.com/Statemood
+# ------------------------------------------
+
+argv="$1"
+IPMI="/dev/shm/ipmi.info"
+
+case $argv in
+    ambtmp)
+        grep 'Ambient Temp' $IPMI | awk '{print $4}' | egrep -v 'na|disable' | awk -F '.' '{print $1}'
+        ;;
+
+    fan*)
+        fanid=`echo $argv | awk -F 'fan' '{print $2}'`
+        grep "FAN MOD $fanid" $IPMI | awk '{print $6}' | awk -F '.' '{print $1}'
+        ;;
+
+    amps)
+        grep 'Amps' $IPMI | awk '{print $3}' | egrep -v 'na'
+        ;;
+
+    voltage)
+        grep 'Voltage' $IPMI | awk '{print $3}' | egrep -v 'na|disable' | awk -F '.' '{print $1}'
+        ;;
+
+    watts)
+        grep 'Watts' $IPMI | awk '{print $4}' | awk -F '.' '{print $1}'
+        ;;
+esac

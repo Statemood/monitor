@@ -4,12 +4,10 @@
 import os
 import json
 
-diskinfo = "/dev/shm/disk.info"
-
-t       = os.popen("grep '^Slot Number' " + diskinfo  + " | awk -F ': ' '{print $2}'""")
+t       = os.popen("grep '[hsv]d[a-z]' /proc/diskstats | awk '{print $3}'")
 
 disks = []
 for disk in  t.readlines():
         r = os.path.basename(disk.strip())
-        disks += [{'{#DISK}':r}]
+        disks += [{'{#DISKDEV}':r}]
 print json.dumps({'data':disks},sort_keys=True,indent=4,separators=(',',':'))

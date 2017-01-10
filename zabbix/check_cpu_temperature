@@ -1,0 +1,25 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+# CPU temperature
+#
+# $0 --cpu 0 --core 1 --temperature
+
+temp_data(){
+    sensors -A                  |\
+    sed -e '/./{H;$!d;}' -e "x;/coretemp-isa-000$cpu/b" -e d |\
+    grep   "^Core $core:"       |\
+    awk    '{print $3}'         |\
+    awk -F '[+.]' '{print $2}'  |\
+    sort -n                     |\
+    tail -1
+}
+
+ cpu="`echo $1 | sed 's/_/ /' | awk '{print $1}'`"
+core="`echo $1 | sed 's/_/ /' | awk '{print $2}'`"
+
+temp_data
