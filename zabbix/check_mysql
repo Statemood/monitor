@@ -13,6 +13,11 @@ port=3306
 user="zabbix"
 exec="/usr/local/bin/mysql"
 
+result(){
+    opts="-s --connect-timeout 5 -h $host -u $user --port $port -p$password "
+    $exec $opts -e "show status like '$item';" 2> /dev/null | awk '{print $2}' | tail -1
+}
+
 for arg in "$@"
 do
     case $arg in
@@ -38,5 +43,6 @@ do
     esac
 done
 
-$exec -h $host -u $user --port $port -p$password -e "show status like '$item';" 2> /dev/null |\
-    awk '{print $2}' | tail -1
+result=`result`
+
+test -z "$result" && echo 1 || echo $result

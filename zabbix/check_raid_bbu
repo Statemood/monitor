@@ -1,0 +1,64 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+# megacli -AdpBbuCmd -aAll -NoLog > bbu.info
+
+bbu_info=bbu.info
+
+case $1 in
+    ALM)    key="Auto-Learn Mode"                           ;;
+    ALP)    key="Auto Learn Period"                         ;;
+    ASC)    key="Absolute State of charge"                  ;;
+    BCT)    key="Battery backup charge time"                ;;
+    BPM)    key="Battery Pack Missing"                      ;;
+    BRR)    key="Battery Replacement required"              ;;
+    BTS)    key="Battery State"                             ;;
+    BTT)    key="BatteryType"                               ;;
+    CGS)    key="Charging Status"                           ;;
+    CGT)    key="Charging Terminated"                       ;;
+    COP)    key="Cache Offload premium feature required"    ;;
+    CUR)    key="Current"                   ;;
+    CYT)    key="Cycle Count"               ;;
+    DCG)    key="Discharging"               ;;
+    DCT)    key="Discharge Terminated"      ;;
+    DGC)    key="Design Capacity"           ;;
+    DGV)    key="Design Voltage"            ;;
+    DOM)    key="Date of Manufacture"       ;;
+    DVC)    key="Device Chemistry"          ;;
+    DVN)    key="Device Name"               ;;
+    FCC)    key="Full Charge Capacity"      ;;
+    FCG)    key="Fully Charged"             ;;
+    FDC)    key="Fully Discharged"          ;;
+    I2C)    key="I2c Errors Detected"       ;;
+    INT)    key="Initialized"               ;;
+    LCA)    key="Learn Cycle Active"        ;;
+    LCR)    key="Learn Cycle Requested"     ;;
+    LCS)    key="Learn Cycle Status"        ;;
+    LCT)    key="Learn Cycle Timeout"       ;;
+    LDI)    key="Learn Delay Interval"      ;;
+    MFN)    key="Manufacture Name"          ;;
+    MMU)    key="Module microcode update required"              ;;
+    MXE)    key="Max Error"                                     ;;
+    NLT)    key="Next Learn time"                               ;;
+    NSC)    key="No space to cache offload"                     ;;
+    OVC)    key="Over Charged"                                  ;;
+    OVT)    key="Over Temperature"                              ;;
+    PFR)    key="Pack is about to fail & should be replaced"    ;;
+    PLR)    key="Periodic Learn Required"   ;;
+    RCA)    key="Remaining Capacity Alarm"  ;;
+    RCL)    key="Remaining Capacity Low"    ;;
+    RCP)    key="Remaining Capacity"        ;;
+    RSC)    key="Relative State of Charge"  ;;
+    RTA)    key="Remaining Time Alarm"      ;;
+    SNB)    key="Serial Number"             ;;
+    SOH)    key="isSOHGood"                 ;;
+    SPI)    key="Specification Info"        ;;
+    TPT)    key="Temperature"               ;;
+    TSL)    key="Transparent Learn"         ;;
+    VOL)    key="Voltage"                   ;;
+esac
+
+grep "^$key" $bbu_info   | awk -F ': ' '{print $2}' | awk '{print $1}' | head -1

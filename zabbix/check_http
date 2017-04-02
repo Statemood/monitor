@@ -47,8 +47,8 @@ do
     esac
 done
 
-test $port = 443 && protocol=https || protocol=http
+test $port   = 443   && protocol=https || protocol=http
+test "$host" = "$ip" && port_opt=":$port"
+test "$ip"   = "0"   || resolve="--resolve $host:$port:$ip"
 
-test "$ip" = "0" || resolve="--resolve $host:$port:$ip"
-
-$curl $resolve $protocol://$host:${port}${url} $opts -w %{$item}
+$curl $resolve $protocol://$host${port_opt}${url} $opts -w %{$item}

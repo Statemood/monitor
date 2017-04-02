@@ -1,0 +1,31 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+
+# cha --ip 192.168.1.1
+
+# seconds
+  times=3
+timeout=2
+   opts="-W $timeout -c $times -i 0.5"
+
+AvgTime(){
+    ping $opts $ip | tail -1 | awk -F '=' '{print $2}' | awk -F '/' '{print $2}'
+}
+
+for arg in "$@"
+do
+    case $arg in
+        --ip)
+            ip="$2"
+            shift 2
+            ;;
+        --alive)
+                    test -z "`AvgTime`" && echo 1 || echo 0 ;;
+        --avg)     AvgTime ;;
+    esac
+done

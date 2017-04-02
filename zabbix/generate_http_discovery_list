@@ -1,0 +1,34 @@
+#! /usr/bin/env python2
+
+# --------------------------------------------------
+#       https://github.com/Statemood/monitor
+#
+# --------------------------------------------------
+
+import os
+import time
+import datetime
+import pymongo
+
+db_host = "localhost"
+db_port = 27017
+
+dc_list = os.path.dirname(os.path.abspath(__file__)) + '/../etc/http-discovery.list'
+f       = open(dc_list, 'w')
+conn    = pymongo.MongoClient(db_host, db_port)
+db      = conn.amc
+results = db.monitors.find({}, {"_id": 0})
+
+c_time  = time.time()
+
+f.write("# Created by " + __file__ + " "
+        + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(c_time)) + "\n\n" )
+
+for i in results:
+    if i['host'].find(':') == -1:
+        iv = i['host']
+        i['host'] = ':' + iv
+
+    d = "%(name)s:%(host)s:%(port)s:%(http_code)s:%(url)s:%(id)s\n" %i
+    f.write(d)
+f.close()

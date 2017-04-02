@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+#coding=utf-8
+
+"""# BTS   Battery State
+# BTT   BatteryType
+# CUR   Current
+# TPT   Temperature
+# VOL   Voltage
+# BPM   Battery Pack Missing
+# BRR   Battery Replacement required
+# COP   Cache Offload premium feature required
+# I2C   I2c Errors Detected
+# LCR   Learn Cycle Requested
+# LCA   Learn Cycle Active
+# LCS   Learn Cycle Status
+# LCT   Learn Cycle Timeout
+# MMU   Module microcode update required
+# NSC   No space to cache offload
+# PFR   Pack is about to fail & should be replaced
+# PLR   Periodic Learn Required
+# RCL   Remaining Capacity Low
+# TSL   Transparent Learn
+# CGT   Charging Terminated
+# DCG   Discharging
+# DCT   Discharge Terminated
+# FCG   Fully Charged
+# FDC   Fully Discharged
+# INT   Initialized
+# OVC   Over Charged
+# OVT   Over Temperature
+# RCA   Remaining Capacity Alarm
+# RTA   Remaining Time Alarm
+# CGS   Charging Status
+# RSC   Relative State of Charge
+# ASC   Absolute State of charge
+# RCP   Remaining Capacity
+# FCC   Full Charge Capacity
+# SOH   isSOHGood
+# BCT   Battery backup charge time
+# CYT   Cycle Count
+# MXE   Max Error
+# DOM   Date of Manufacture
+# DGC   Design Capacity
+# DGV   Design Voltage
+# SPI   Specification Info
+# SNB   Serial Number
+# MFN   Manufacture Name
+# DVN   Device Name
+# DVC   Device Chemistry
+# ALP   Auto Learn Period
+# NLT   Next Learn time
+# LDI   Learn Delay Interval
+# ALM   Auto-Learn Mode"""
+
+def jsondata():
+    import os
+    import json
+
+    items = []
+    for stat in os.popen("tail -1 /dev/shm/bbu.info | awk -F ': ' '{print $2}'"):
+        if stat == '0x22\n':
+            print('{"data":[{"bbu": "No bbu information"}]}')
+        else:
+            for item in __doc__.split("\n"):
+                items += [{'{#BBU.KEY}':item[2:5], '{#BBU.TAG}':item[8:]}]
+
+            print json.dumps({'data':items},sort_keys=True,indent=4,separators=(',',':'))
+
+if __name__ == "__main__":
+    jsondata()
