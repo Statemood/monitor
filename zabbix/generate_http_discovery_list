@@ -10,8 +10,8 @@ import time
 import datetime
 import pymongo
 
-db_host = "localhost"
-db_port = 27017
+db_host = ""
+db_port = 
 
 dc_list = os.path.dirname(os.path.abspath(__file__)) + '/../etc/http-discovery.list'
 f       = open(dc_list, 'w')
@@ -20,6 +20,8 @@ db      = conn.amc
 results = db.monitors.find({}, {"_id": 0})
 
 c_time  = time.time()
+
+conn.close()
 
 f.write("# Created by " + __file__ + " "
         + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(c_time)) + "\n\n" )
