@@ -15,7 +15,7 @@ curl=/usr/local/curl/bin/curl
 test -x $curl || curl=curl
 
 port=80
-opts="--max-time 5 --retry 3 --retry-delay 1 -o /dev/null -s"
+opts="-IL --max-time 5 -o /dev/null -s"
 
 if [ "$#" -lt 4 ]
 then

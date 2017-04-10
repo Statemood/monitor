@@ -1,0 +1,54 @@
+#! /bin/bash
+
+# --------------------------------------------------
+# Project monitor
+#       https://github.com/Statemood/monitor
+#
+# A part of the project AMC
+#       https://github.com/Statemood/amc
+# --------------------------------------------------
+
+sms_api=""
+sms_key=""
+
+if [ "$#" != 6 ]
+then
+    echo "Required argument"
+    exit 1
+fi
+
+for arg in "$@"
+do
+    case "$arg" in
+        -i|--id)
+            alert_id="$2"
+            shift 2
+            ;;
+        -s|--subject)
+            subject="$2"
+            shift 2
+            ;;
+        -c|--content)
+            content="$2"
+            shift 2
+            ;;
+    esac
+done
+
+send_sms(){
+    curl -X POST $sms_api -d "mobile=$mobile&content=$content&key=$sms_key"
+}
+
+send_mail(){
+    echo $(dirname $0)/mail.py "$mail" "$subject" "$content"
+}
+
+$(dirname $0)/notice_alert_get_info $alert_id |\
+while read notice name mail mobile
+do
+    case $notice in
+        0)  send_mail               ;;
+        1)  send_sms                ;;
+        2)  send_sms;   send_mail   ;;
+    esac
+done

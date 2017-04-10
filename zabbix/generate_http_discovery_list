@@ -3,15 +3,19 @@
 # --------------------------------------------------
 #       https://github.com/Statemood/monitor
 #
+# Project AMC
+#       https://github.com/Statemood/amc
 # --------------------------------------------------
+
+# Data from AMC, monitors
 
 import os
 import time
 import datetime
 import pymongo
 
-db_host = ""
-db_port = 
+db_host = "localhost"
+db_port = 27017
 
 dc_list = os.path.dirname(os.path.abspath(__file__)) + '/../etc/http-discovery.list'
 f       = open(dc_list, 'w')

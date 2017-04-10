@@ -1,0 +1,39 @@
+#! /usr/bin/env python2
+
+# --------------------------------------------------
+# Project monitor
+#       https://github.com/Statemood/monitor
+#
+# A part of the project AMC
+#       https://github.com/Statemood/amc
+# --------------------------------------------------
+
+# Data from AMC, monitors
+
+import sys
+import ldap
+import pymongo
+from   userinfo import LDAPSearch as ldap_search
+
+db_host     = "localhost"
+db_port     = 27017
+rule_id     = sys.argv[1]
+conn        = pymongo.MongoClient(db_host, db_port)
+db          = conn.amc
+us          = ldap_search()
+user_attrib = ['cn', 'mobile', 'mail', 'uid']
+watching    = db.watching.find({"rule": rule_id}, {"_id": 0})
+
+conn.close()
+
+for w in watching:
+    notice      = w.get('notice')
+    user_filter = 'uid=' + w.get('uid')
+    user_info   = us.usr_search(filter = user_filter, attrib=user_attrib)
+
+    for u in user_info:
+        user_cn     = str(u).split("'cn'")[1].split("'")[1]
+        user_mail   = str(u).split("'mail'")[1].split("'")[1]
+        user_mobile = str(u).split("'mobile'")[1].split("'")[1]
+
+        print notice, user_cn, user_mail, user_mobile
