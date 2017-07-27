@@ -1,0 +1,18 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+# --host 127.0.0.1 --port 1978 --cmd count|rw
+
+item="$1"
+host="127.0.0.1"
+port="1978"
+
+data(){
+    tcrmgr inform -st -port $port $host
+}
+
+data | grep "^$item" | head -1 | awk '{print $2}'

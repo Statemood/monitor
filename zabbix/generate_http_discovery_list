@@ -22,7 +22,6 @@ f       = open(dc_list, 'w')
 conn    = pymongo.MongoClient(db_host, db_port)
 db      = conn.amc
 results = db.monitors.find({}, {"_id": 0})
-
 c_time  = time.time()
 
 conn.close()
