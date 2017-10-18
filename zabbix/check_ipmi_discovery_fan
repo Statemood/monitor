@@ -1,0 +1,35 @@
+#! /bin/bash
+
+# ------------------------------------------
+#
+#       https://github.com/Statemood/monitor
+# ------------------------------------------
+
+# modprobe ipmi_msghandler
+# modprobe ipmi_devintf
+# modprobe ipmi_si
+
+ipmi_info=/dev/shm/ipmi.info
+
+data=(`awk -F '|' '{print $1}' $ipmi_info   |\
+       grep "^FAN "                         |\
+       tr -s " " "_"                        |\
+       sed 's/_$//'                         |\
+       sort`)
+
+len=${#data[@]}
+
+printf "{\n"
+printf  '\t'"\"data\":["
+for ((i=0;i<$len;i++))
+do
+        printf '\n\t\t{'
+        printf "\"{#IPMI_KEY}\":\"${data[$i]}\"}"
+        if [ $i -lt $[$len-1] ]
+        then
+            printf ','
+        fi
+done
+
+printf  "\n\t]\n"
+printf "}\n"

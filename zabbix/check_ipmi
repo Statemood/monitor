@@ -12,4 +12,4 @@
       key="`echo $1 | tr '_' ' '`"
 ipmi_info="/dev/shm/ipmi.info"
 
-grep "^$key" $ipmi_info | awk -F '|' '{print $2}' | awk '{print $1}'
+grep "$key" $ipmi_info | awk -F '|' '{print $2}' | awk '{print $1}'
