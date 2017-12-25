@@ -1,0 +1,16 @@
+#! /bin/bash
+
+# check_ceph -i item -t target
+
+
+case $1 in
+    osd_total)  ceph osd stat | awk '{print $1}'  ;;
+       osd_up)  ceph osd stat | awk '{print $3}'  ;;
+       ods_in)  ceph osd stat | awk '{print $5}'  ;;
+        pools)  ceph status   | grep 'pools: ' | awk '{print $2}' ;;
+          pgs)  ceph status   | grep 'pools: ' | awk '{print $4}' ;;
+         used)  ceph status   | grep 'usage: ' | awk '{print $2}' ;;  # GB
+        avail)  ceph status   | grep 'usage: ' | awk '{print $5}' ;;  # GB
+        total)  ceph status   | grep 'usage: ' | awk '{print $8}' ;;  # GB
+        
+esac
