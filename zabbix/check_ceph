@@ -1,6 +1,72 @@
 #! /bin/bash
 
-# check_ceph -i item -t target
+
+# ------------------------------------------
+# Project Monitor
+#       https://github.com/Statemood/monitor
+#
+# Lin Ru Lin.Ru@msn.com
+# ------------------------------------------
+
+
+
+ceph_usage(){
+    ceph -s | grep 'usage:'
+}
+
+osd_usage_used(){
+    ceph_usage | awk -F ',' '{print $1}' | awk -F ':' '{print $2}'
+}
+
+osd_usage_available(){
+    ceph_usage | awk -F '/' '{print $1}' | awk -F ',' '{print $2}'
+}
+
+osd_usage_total(){
+    ceph_usage | awk -F '/' '{print $2}'
+}
+
+osd_usage_print(){
+    s="`$1 | awk '{print $2}'`"
+    n="`$1 | awk '{print $1}'`"
+
+    case $s in 
+        MB)     echo "$n * 1024 * 1024"                | bc    ;;
+        GB)     echo "$n * 1024 * 1024 * 1024"         | bc    ;;
+        TB)     echo "$n * 1024 * 1024 * 1024 * 1024"  | bc    ;;
+    esac
+}
+
+ceph_health(){
+    hs="`ceph -s | grep 'health:' | awk -F ': ' '{print $2}'`"
+
+    case $hs in
+        HEALTH_OK)      echo 0  ;;
+        HEALTH_WARN)    echo 1  ;;
+        HEALTH_ERR)     echo 2  ;;
+    esac
+}
+
+io_client(){
+    ceph -s | grep -A 1 "io:" | tail -1 | awk -F ':' '{print $2}' | awk  -F ',' "{print \$$1}"
+}
+
+io_msg(){
+    # $1
+    #   1 = Read bps
+    #   2 = Write bps
+    #   3 = Read IOPS
+    #   4 = Write IOPS
+
+    n=` io_client $1 | awk '{print $1}'`
+    s="`io_client $1 | awk '{print $2}' | awk -F '/' '{print $1}'`"
+
+    case $s in
+        op|B)     echo "$n"                       ;;
+          kB)     echo "$n * 1024"        | bc    ;;
+          mB)     echo "$n * 1024 * 1024" | bc    ;;
+    esac
+}
 
 
 case $1 in
@@ -9,8 +75,12 @@ case $1 in
        osd_in)  ceph osd stat | awk '{print $5}'  ;;
         pools)  ceph status   | grep 'pools: ' | awk '{print $2}' ;;
           pgs)  ceph status   | grep 'pools: ' | awk '{print $4}' ;;
-         used)  ceph status   | grep 'usage: ' | awk '{print $2}' ;;  # GB
-        avail)  ceph status   | grep 'usage: ' | awk '{print $5}' ;;  # GB
-        total)  ceph status   | grep 'usage: ' | awk '{print $8}' ;;  # GB
-
+         used)  osd_usage_print osd_usage_used          ;;
+        avail)  osd_usage_print osd_usage_available     ;;
+        total)  osd_usage_print osd_usage_total         ;;
+       health)  ceph_health ;;
+         io_r)  io_msg 1    ;;
+         io_w)  io_msg 2    ;;
+       iops_r)  io_msg 3    ;;
+       iops_w)  io_msg 4    ;;
 esac
