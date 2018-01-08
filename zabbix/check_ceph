@@ -1,6 +1,5 @@
 #! /bin/bash
 
-
 # ------------------------------------------
 # Project Monitor
 #       https://github.com/Statemood/monitor
@@ -8,35 +7,23 @@
 # Lin Ru Lin.Ru@msn.com
 # ------------------------------------------
 
+osd_stats       (){ ceph osd stat                  |  awk "{print \$$1}"    ; }
+osd_pools       (){ ceph status   | grep 'pools: ' |  awk "{print \$$1}"    ; }
+osd_usage_data  (){ ceph -s | grep 'usage:' | awk -F "$1" "{print \$$2}"    ; }
+osd_usage_used  (){ osd_usage_data , 1 |         awk -F ':' '{print $2}'    ; }
+osd_usage_avail (){ osd_usage_data / 1 |         awk -F ',' '{print $2}'    ; }
+osd_usage_total (){ osd_usage_data / 2                                      ; }
 
-
-ceph_usage(){
-    ceph -s | grep 'usage:'
-}
-
-osd_usage_used(){
-    ceph_usage | awk -F ',' '{print $1}' | awk -F ':' '{print $2}'
-}
-
-osd_usage_available(){
-    ceph_usage | awk -F '/' '{print $1}' | awk -F ',' '{print $2}'
-}
-
-osd_usage_total(){
-    ceph_usage | awk -F '/' '{print $2}'
-}
-
-osd_usage_print(){
+osd_usage(){
     s="`$1 | awk '{print $2}'`"
     n="`$1 | awk '{print $1}'`"
 
     case $s in 
-        MB)     echo "$n * 1024 * 1024"                | bc    ;;
-        GB)     echo "$n * 1024 * 1024 * 1024"         | bc    ;;
-        TB)     echo "$n * 1024 * 1024 * 1024 * 1024"  | bc    ;;
+        MB)     echo "$(($n * 1024 * 1024))"                 ;;
+        GB)     echo "$(($n * 1024 * 1024 * 1024))"          ;;
+        TB)     echo "$(($n * 1024 * 1024 * 1024 * 1024))"   ;;
     esac
 }
-
 ceph_health(){
     hs="`ceph -s | grep 'health:' | awk -F ': ' '{print $2}'`"
 
@@ -46,41 +33,33 @@ ceph_health(){
         HEALTH_ERR)     echo 2  ;;
     esac
 }
-
 io_client(){
+    # $1,  1 = Read  bps   2 = Write bps   3 = Read  IOPS  4 = Write IOPS
     ceph -s | grep -A 1 "io:" | tail -1 | awk -F ':' '{print $2}' | awk  -F ',' "{print \$$1}"
 }
-
 io_msg(){
-    # $1
-    #   1 = Read bps
-    #   2 = Write bps
-    #   3 = Read IOPS
-    #   4 = Write IOPS
-
     n=` io_client $1 | awk '{print $1}'`
     s="`io_client $1 | awk '{print $2}' | awk -F '/' '{print $1}'`"
 
     case $s in
-        op|B)     echo "$n"                       ;;
-          kB)     echo "$n * 1024"        | bc    ;;
-          mB)     echo "$n * 1024 * 1024" | bc    ;;
+        op|B)     echo "$n"                     ;;
+          kB)     echo "$(($n * 1024))"         ;;
+          mB)     echo "$(($n * 1024 * 1024))"  ;;
     esac
 }
 
-
 case $1 in
-    osd_total)  ceph osd stat | awk '{print $1}'  ;;
-       osd_up)  ceph osd stat | awk '{print $3}'  ;;
-       osd_in)  ceph osd stat | awk '{print $5}'  ;;
-        pools)  ceph status   | grep 'pools: ' | awk '{print $2}' ;;
-          pgs)  ceph status   | grep 'pools: ' | awk '{print $4}' ;;
-         used)  osd_usage_print osd_usage_used          ;;
-        avail)  osd_usage_print osd_usage_available     ;;
-        total)  osd_usage_print osd_usage_total         ;;
-       health)  ceph_health ;;
-         io_r)  io_msg 1    ;;
-         io_w)  io_msg 2    ;;
-       iops_r)  io_msg 3    ;;
-       iops_w)  io_msg 4    ;;
+    osd_total)  osd_stats   1   ;;
+       osd_up)  osd_stats   3   ;;
+       osd_in)  osd_stats   5   ;;
+        pools)  osd_pools   2   ;;
+          pgs)  osd_pools   4   ;;
+         io_r)  io_msg      1   ;;  # Read  B/s
+         io_w)  io_msg      2   ;;  # Write B/s
+       iops_r)  io_msg      3   ;;  # IOPS Read  per sec
+       iops_w)  io_msg      4   ;;  # IOPS Write per sec
+       health)  ceph_health     ;;
+         used)  osd_usage osd_usage_used    ;;
+        avail)  osd_usage osd_usage_avail   ;;
+        total)  osd_usage osd_usage_total   ;;
 esac
