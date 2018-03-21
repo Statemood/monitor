@@ -1,0 +1,28 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Project Monitor
+#       https://github.com/Statemood/monitor
+#
+# Lin Ru Lin.Ru@msn.com
+# ------------------------------------------
+
+msg(){
+    echo $1
+    exit $1
+}
+
+  ip="`hostname -i`"
+ ssl="/etc/kubernetes/ssl"
+  ca="$ssl/ca.pem"
+cert="$ssl/etcd-`hostname -s`.pem"
+ key="$ssl/etcd-`hostname -s`.key"
+
+etcdctl --endpoints=https://$ip:2379 \
+        --ca-file=$ca \
+        --cert-file=$cert \
+        --key-file=$key cluster-health | \
+        grep 'is healthy' | \
+        grep "$ip" -q
+
+test $? = 0 && msg 0 || msg 1

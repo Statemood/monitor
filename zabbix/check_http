@@ -1,36 +1,45 @@
 #! /bin/bash
 
-# --------------------------------------------------
-# Project monitor:
-#       https://github.com/Statemood/monitor
-#
-#
-# --------------------------------------------------
-
 # Usage:
-#   check_http --host 11 --ip 22 --port 33 --item <arguments for curl -w> --url <optional>
-
+# check_http --host 11 --port 33 --item <arguments for curl -w> --action <0 or 1> --url <optional>
 
 curl=/usr/local/curl/bin/curl
-test -x $curl || curl=curl
+logdir="/tmp/monitors"
 
+test -x $curl     || curl=curl
+test -d "$logdir" || mkdir "$logdir"
+
+es_host=""
 port=80
-opts="-IL --max-time 5 -o /dev/null -s"
 
-if [ "$#" -lt 4 ]
+es_index="logstash-`date -d '483 minutes ago' +%Y.%m.%d`,logstash-`date -d '480 minutes ago' +%Y.%m.%d`"
+
+if [ "$1" = "count" ]
+then
+    case $2 in
+        rules)
+            dc_rule="$(dirname $(dirname $0))/etc/http-discovery.list"
+            egrep -v "^#|^$" $dc_rule | wc -l
+            ;;
+        services)
+            $(dirname $0)/check_http_discovery | grep '^{"{#HTTP' | wc -l
+            ;;
+    esac
+    exit 0
+fi
+
+if [ "$#" -lt 5 ]
 then
     echo 100001
     exit 1
 fi
+
+args="$@"
 for arg in "$@"
 do
     case $arg in
         --host)
             host="$2"
-            shift 2
-            ;;
-        --ip)
-            ip="$2"
             shift 2
             ;;
         --port)
@@ -41,14 +50,121 @@ do
             item="$2"
             shift 2
             ;;
+        --action)
+            action="$2"
+            shift 2
+            ;;
         --url)
             url="$2"
+            shift 2
+            ;;
+        --value)
+            value="$2"
+            shift 2
+            ;;
+        --uuid)
+            uuid="$2"
+            shift 2
+            ;;
+        --keyword)
+            keyword="$2"
+            shift 2
             ;;
     esac
 done
 
-test $port   = 443   && protocol=https || protocol=http
-test "$host" = "$ip" && port_opt=":$port"
-test "$ip"   = "0"   || resolve="--resolve $host:$port:$ip"
+logfile="/tmp/monitors/$uuid.log"
+if [ "$item" = "time_total" ]
+then
+    # 防止time_total类型检测覆盖http_code检测
+    logfile=/dev/null
+fi
 
-$curl $resolve $protocol://$host${port_opt}${url} $opts -w %{$item}
+echo "$args" > $logfile
+
+test $port = 443 && protocol=https || protocol=http
+
+if [ "$action" = 0 ]
+then
+    return_code=`$curl $protocol://$host:${port}${url} --max-time 4 --trace-time -v -s -o /dev/null -w %{$item} 2>> $logfile`
+    test -z "$return_code" && echo 0 || echo $return_code
+elif [ "$action" = 2 ]
+then
+    content=`curl -s --max-time 4 --trace-time -v $protocol://$host:${port}${url} 2>> $logfile`
+
+    regex=`base64 -d <<< $keyword 2> /dev/null`
+    if [ $? -ne 0 ]
+    then
+        echo "解码正则[$keyword]错误，请修复后重试！" >> $logfile
+        echo 500
+        exit 0
+    fi
+
+    if grep -Pq "$regex" <<< $content 2> /dev/null
+    then
+        echo $value
+    else
+        echo "正则[$regex]未匹配，返回值：" >> $logfile
+        echo "$content" >> $logfile
+        echo 500
+    fi
+
+    exit 0
+elif [ "$action" = 3 ]
+then
+    $(dirname $0)/check_business.php "$host" "$port" "$url" "$keyword" "$uuid" "$value"
+else
+    if [ "$item" = "http_code" ]
+    then
+        query='{"size":3,"query":{"bool":{"filter":[{"range":{"@timestamp":{"gte":"now-3m","lte":"now-2m"}}},{"term":{"server_name.keyword":"'$host'"}},{"wildcard":{"request_url.keyword":"'$url'"}}],"must_not":{"term":{"status.keyword":"'$value'"}}}},"sort":[{"status.keyword":"desc"}]}'
+#
+        result=`curl -s --max-time 4 --trace-time -v -XGET "$es_host/$es_index/_search?pretty" -d "$query" 2>> $logfile`
+
+        # 请求错误
+        if ! grep -Pq '"total"\s*:\s*\d+' <<< $result
+        then
+            # 每天八点之后的数据会保存到新的索引，没有新数据时查询会报错
+            if grep -q "index_not_found_exception" <<< $result && [ "`date -d '480 minutes ago' +%H`" = "00" ]
+            then
+                echo $value
+                exit 0
+            fi
+
+            echo "返回值：" >> $logfile
+            echo "$result" >> $logfile
+
+            echo 999
+            exit 0
+        fi
+
+        # 没有找到“status"表示没有错误，否则返回找到的状态码或错误码
+        status=$(grep -Po '"status"\s*:\s*"\d+"' <<< $result)
+        if [ -z "$status" ]
+        then
+            echo $value
+        else
+            echo "返回值：" >> $logfile
+            echo "$result" >> $logfile
+
+            grep -Po -m 1 '\d+' <<< "$status" || echo 998
+        fi
+        exit 0
+    fi
+
+    if [ "$item" = "time_total" ]
+    then
+        query='{"size":1,"query":{"bool":{"filter":[{"range":{"@timestamp":{"gte":"now-3m","lte":"now-2m"}}},{"term":{"server_name.keyword":"'$host'"}},{"wildcard":{"request_url.keyword":"'$url'"}}]}},"sort":[{"request_time.keyword":"desc"}]}'
+        result=`curl -s --max-time 4 -XGET "$es_host/$es_index/_search?filter_path=hits.total,hits.hits._source.request_time" -d "$query"`
+
+        # 请求错误
+        if ! grep -q "total" <<< $result
+        then
+            echo 0
+            exit 0
+        fi
+
+        time=`grep -Po '"request_time"\s*:\s*"[\d.]+"' <<< $result`
+        grep -Po '[\d.]+' <<< $time || echo 0
+        exit 0
+    fi
+fi

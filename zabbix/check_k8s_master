@@ -1,0 +1,25 @@
+#! /bin/bash
+
+# ------------------------------------------
+# Project Monitor
+#       https://github.com/Statemood/monitor
+#
+# Lin Ru Lin.Ru@msn.com
+# ------------------------------------------
+
+host="`hostname -i`"
+port="6443"
+ api="https://$host:$port"
+ ssl="/etc/kubernetes/ssl"
+  ca="$ssl/ca.pem"
+ pem="$ssl/kubelet-`hostname -s`.pem"
+ key="$ssl/kubelet-`hostname -s`.key"
+
+http_code="`curl -sq -m 5 -o /dev/null $api -w %{http_code} --cacert $ca --cert $pem --key $key`"
+
+msg(){
+    echo $1
+    exit $1
+}
+
+test $http_code = 200 && msg 0 || msg 1

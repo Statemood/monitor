@@ -7,18 +7,20 @@
 # Lin Ru Lin.Ru@msn.com
 # ------------------------------------------
 
-osd_stats       (){ ceph osd stat                  |  awk "{print \$$1}"    ; }
-osd_pools       (){ ceph status   | grep 'pools: ' |  awk "{print \$$1}"    ; }
-osd_usage_data  (){ ceph -s | grep 'usage:' | awk -F "$1" "{print \$$2}"    ; }
-osd_usage_used  (){ osd_usage_data , 1 |         awk -F ':' '{print $2}'    ; }
-osd_usage_avail (){ osd_usage_data / 1 |         awk -F ',' '{print $2}'    ; }
-osd_usage_total (){ osd_usage_data / 2                                      ; }
+osd_stats        (){ ceph osd stat                  |  awk "{print \$$1}"    ; }
+osd_pools        (){ ceph status   | grep 'pools: ' |  awk "{print \$$1}"    ; }
+osd_usage_data   (){ ceph -s | grep 'usage:' | awk -F "$1" "{print \$$2}"    ; }
+osd_usage_used   (){ osd_usage_data , 1 |         awk -F ':' '{print $2}'    ; }
+osd_usage_avail  (){ osd_usage_data / 1 |         awk -F ',' '{print $2}'    ; }
+osd_usage_total  (){ osd_usage_data / 2                                      ; }
+osd_usage_objects(){ ceph -s | grep 'objects' | awk "{print \$$1}"       ; }
+osd_usage_objsize(){ osd_usage_objects '4,$5'                    ; }
 
 osd_usage(){
     s="`$1 | awk '{print $2}'`"
     n="`$1 | awk '{print $1}'`"
 
-    case $s in 
+    case $s in
         MB)     echo "$(($n * 1024 * 1024))"                 ;;
         GB)     echo "$(($n * 1024 * 1024 * 1024))"          ;;
         TB)     echo "$(($n * 1024 * 1024 * 1024 * 1024))"   ;;
@@ -48,6 +50,13 @@ io_msg(){
     esac
 }
 
+obj_number(){
+    obj_str="`osd_usage_objects 2`"
+    obj_num=`echo $obj_str | awk -F '[kmg]' '{print $1}'`
+
+    echo "$(($obj_num * 1000))"
+}
+
 case $1 in
     osd_total)  osd_stats   1   ;;
        osd_up)  osd_stats   3   ;;
@@ -59,7 +68,9 @@ case $1 in
        iops_r)  io_msg      3   ;;  # IOPS Read  per sec
        iops_w)  io_msg      4   ;;  # IOPS Write per sec
        health)  ceph_health     ;;
-         used)  osd_usage osd_usage_used    ;;
-        avail)  osd_usage osd_usage_avail   ;;
-        total)  osd_usage osd_usage_total   ;;
+         used)  osd_usage osd_usage_used      ;;
+        avail)  osd_usage osd_usage_avail     ;;
+        total)  osd_usage osd_usage_total     ;;
+      obj_num)  obj_number                    ;;
+     obj_size)  osd_usage osd_usage_objsize   ;;
 esac
