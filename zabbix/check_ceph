@@ -39,15 +39,18 @@ io_client(){
     # $1,  1 = Read  bps   2 = Write bps   3 = Read  IOPS  4 = Write IOPS
     ceph -s | grep -A 1 "io:" | tail -1 | awk -F ':' '{print $2}' | awk  -F ',' "{print \$$1}"
 }
+
 io_msg(){
     n=` io_client $1 | awk '{print $1}'`
     s="`io_client $1 | awk '{print $2}' | awk -F '/' '{print $1}'`"
 
     case $s in
-        op|B)     echo "$n"                     ;;
-          kB)     echo "$(($n * 1024))"         ;;
-          mB)     echo "$(($n * 1024 * 1024))"  ;;
+        op|B)     res="$n"                     		;;
+          kB)     res=`echo "$(($n * 1024))"`  		;;
+          mB)     res=`echo "$(($n * 1024 * 1024))"`	;;
     esac
+
+    test -z "$res" && echo 0 || echo $res
 }
 
 obj_number(){
