@@ -65,8 +65,8 @@ case $1 in
           pgs)  osd_pools   4   ;;
          io_r)  io_msg      1   ;;  # Read  B/s
          io_w)  io_msg      2   ;;  # Write B/s
-       iops_r)  io_msg      3   ;;  # IOPS Read  per sec
-       iops_w)  io_msg      4   ;;  # IOPS Write per sec
+        ops_r)  io_msg      3   ;;  # OPS Read  per sec
+        ops_w)  io_msg      4   ;;  # OPS Write per sec
        health)  ceph_health     ;;
          used)  osd_usage osd_usage_used      ;;
         avail)  osd_usage osd_usage_avail     ;;
