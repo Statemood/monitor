@@ -1,10 +1,17 @@
 #!/usr/bin/env python
 #coding=utf-8
 
+# ------------------------------------------
+# Project Monitor
+#       https://github.com/Statemood/monitor
+#
+# Lin.Ru@msn.com
+# ------------------------------------------
+
 import os
 import json
 
-t       = os.popen("grep '[hsv]d[a-z]' /proc/diskstats | awk '{print $3}'")
+t = os.popen("grep '[hsv]d[a-z]' /proc/diskstats | awk '{print $3}'")
 
 disks = []
 for disk in  t.readlines():

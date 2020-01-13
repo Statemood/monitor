@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+# ------------------------------------------
+# Project Monitor
+#       https://github.com/Statemood/monitor
+#
+# Lin.Ru@msn.com
+# ------------------------------------------
+
+#coding=utf-8
+
+import os
+import json
+
+t = os.popen("docker ps -aq")
+
+o = []
+for c in  t.readlines():
+        o += [{'{#CONTAINER}': os.path.basename(c.strip())}]
+
+print json.dumps({'data':o},sort_keys=True,indent=4,separators=(',',': '))
