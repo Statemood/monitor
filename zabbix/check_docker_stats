@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # ------------------------------------------
 # Project Monitor
@@ -9,48 +9,36 @@
 
  id="$1"
 arg="$2"
+if [ "$1" == "" ]; then
+	exit 1
+fi
 
-get(){
-    sudo docker stats --no-stream $1 | tail -1
-}
+KB=1024
+MB=$(($KB * 1024))
+GB=$(($MB * 1024))
+stats=($(sudo docker stats --no-stream $1 | tail -1))
 
-raw(){
-    if grep -q "GiB" <<< $1
-    then
-        n=`echo $1 | sed 's/GiB//'`
-        echo "$n * 1024 * 1024 * 1024" | bc
-        exit
-    fi
-
-    if grep -q "MiB" <<< $1
-    then
-        n=`echo $1 | sed 's/MiB//'`
-        echo "$n * 1024 * 1024" | bc
-        exit
-    fi
-
-    if grep -q "KiB" <<< $1
-    then
-        n=`echo $1 | sed 's/KiB//'`
-        echo "$n * 1024" | bc
-        exit
-    fi
-
-    if grep -q "B" <<< $1
-    then
-        echo $1 | sed 's/B//'
-        exit
-    fi
+raw() {
+	cnt=$(echo $1 | tr -cd "[0-9.]")
+	case $1 in
+		*"GiB")	echo "$cnt * $GB" | bc	;;
+		*"MiB")	echo "$cnt * $MB" | bc	;;
+		*"KiB")	echo "$cnt * $KB" | bc	;;
+		*"kB")	echo "$cnt * $KB" | bc	;;
+		*"B")	echo $cnt		;;
+		*"%")	echo $1 | tr -d '%'	;;
+		*)	echo $1			;;
+	esac
 }
 
 case $arg in
-    --name)              get $id | awk '{print $2}'                 ;;
-    --cpu)               get $id | awk '{print $3}' | sed 's/%//'   ;;
-    --mem_percent)       get $id | awk '{print $7}' | sed 's/%//'   ;;
-    --mem_usage)    raw `get $id | awk '{print $4}'`                ;;
-    --mem_limit)    raw `get $id | awk '{print $6}'`                ;;
-    --net_i)        raw `get $id | awk '{print $8}'`                ;;
-    --net_o)        raw `get $id | awk '{print $10}'`               ;; 
-    --block_i)      raw `get $id | awk '{print $11}'`               ;; 
-    --block_o)      raw `get $id | awk '{print $13}'`               ;;
+	--name)		echo "${stats[1]}"	;;
+	--cpu)		raw "${stats[2]}"	;;
+	--mem_percent)	raw "${stats[6]}"	;;
+	--mem_usage)	raw "${stats[3]}"	;;
+	--mem_limit)	raw "${stats[5]}"	;;
+	--net_i)	raw "${stats[7]}"	;;
+	--net_o)	raw "${stats[9]}"	;;
+	--block_i)	raw "${stats[10]}"	;;
+	--block_o)	raw "${stats[12]}"	;;
 esac
