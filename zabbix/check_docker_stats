@@ -1,5 +1,4 @@
 #! /bin/bash
-
 # ------------------------------------------
 # Project Monitor
 #       https://github.com/Statemood/monitor
@@ -9,24 +8,30 @@
 
  id="$1"
 arg="$2"
-if [ "$1" == "" ]; then
+if [ -z "$id" ] || [ -z "$arg" ]; then
 	exit 1
 fi
 
-KB=1024
-MB=$(($KB * 1024))
-GB=$(($MB * 1024))
-stats=($(sudo docker stats --no-stream $1 | tail -1))
+# KB,MB,GB are used under net IO and block IO
+KiB=1024
+KB=1000
+MiB=$(($KiB * 1024))
+MB=$(($KB * 1000))
+GiB=$(($MiB * 1024))
+GB=$(($MB * 1000))
+stats=($(sudo docker stats --no-stream $id | tail -1))
 
 raw() {
 	cnt=$(echo $1 | tr -cd "[0-9.]")
 	case $1 in
-		*"GiB")	echo "$cnt * $GB" | bc	;;
-		*"MiB")	echo "$cnt * $MB" | bc	;;
-		*"KiB")	echo "$cnt * $KB" | bc	;;
-		*"kB")	echo "$cnt * $KB" | bc	;;
+		*"GiB")	bc <<< "$cnt * $GiB"	;;
+		*"GB")	bc <<< "$cnt * $GB"	;;
+		*"MiB")	bc <<< "$cnt * $MiB"	;;
+		*"MB")	bc <<< "$cnt * $MB"	;;
+		*"KiB")	bc <<< "$cnt * $KiB"	;;
+		*"kB")	bc <<< "$cnt * $KB"	;;
 		*"B")	echo $cnt		;;
-		*"%")	echo $1 | tr -d '%'	;;
+		*"%")	echo $cnt		;;
 		*)	echo $1			;;
 	esac
 }
