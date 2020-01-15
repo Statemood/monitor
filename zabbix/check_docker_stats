@@ -3,7 +3,8 @@
 # Project Monitor
 #       https://github.com/Statemood/monitor
 #
-# Lin Ru Lin.Ru@msn.com
+# Created by Lin Ru Lin.Ru@msn.com
+# Updated by Xingyou Chen <rockrush@rockwork.org>
 # ------------------------------------------
 
  id="$1"
@@ -28,25 +29,25 @@ raw() {
 	cnt=$(echo $1 | tr -cd "[0-9.]")
 	case $1 in
 		*"GiB")	bc <<< "$cnt * $GiB"	;;
-		*"GB")	bc <<< "$cnt * $GB"	;;
+		*"GB")	bc <<< "$cnt * $GB"	    ;;
 		*"MiB")	bc <<< "$cnt * $MiB"	;;
-		*"MB")	bc <<< "$cnt * $MB"	;;
+		*"MB")	bc <<< "$cnt * $MB"	    ;;
 		*"KiB")	bc <<< "$cnt * $KiB"	;;
-		*"kB")	bc <<< "$cnt * $KB"	;;
-		*"B")	echo $cnt		;;
-		*"%")	echo $cnt		;;
-		*)	echo $1			;;
+		*"kB")	bc <<< "$cnt * $KB"	    ;;
+		*"B")	echo $cnt		        ;;
+		*"%")	echo $cnt		        ;;
+		*)	    echo $1			        ;;
 	esac
 }
 
 case $arg in
-	--name)		echo "${stats[1]}"	;;
-	--cpu)		raw "${stats[2]}"	;;
-	--mem_percent)	raw "${stats[6]}"	;;
-	--mem_usage)	raw "${stats[3]}"	;;
-	--mem_limit)	raw "${stats[5]}"	;;
-	--net_i)	raw "${stats[7]}"	;;
-	--net_o)	raw "${stats[9]}"	;;
-	--block_i)	raw "${stats[10]}"	;;
-	--block_o)	raw "${stats[12]}"	;;
+	--name)		    echo "${stats[1]}"	;;
+	--cpu)		    raw  "${stats[2]}"	;;
+	--mem_percent)	raw  "${stats[6]}"	;;
+	--mem_usage)	raw  "${stats[3]}"	;;
+	--mem_limit)	raw  "${stats[5]}"	;;
+	--net_i)	    raw  "${stats[7]}"	;;
+	--net_o)	    raw  "${stats[9]}"	;;
+	--block_i)	    raw  "${stats[10]}"	;;
+	--block_o)	    raw  "${stats[12]}"	;;
 esac
