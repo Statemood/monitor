@@ -12,7 +12,7 @@
 import os
 import json
 
-t = os.popen("docker ps -aq")
+t = os.popen("sudo docker ps -aq")
 
 o = []
 for c in  t.readlines():

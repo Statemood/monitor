@@ -1,11 +1,11 @@
 #! /bin/bash
-# ------------------------------------------
+# --------------------------------------------------
 # Project Monitor
 #       https://github.com/Statemood/monitor
 #
 # Created by Lin Ru Lin.Ru@msn.com
 # Updated by Xingyou Chen <rockrush@rockwork.org>
-# ------------------------------------------
+# --------------------------------------------------
 
  id="$1"
 arg="$2"
@@ -15,18 +15,18 @@ then
 	exit 1
 fi
 
-# KB,MB,GB are used under net IO and block IO
-KiB=1024
- KB=1000
- MB=$(($KB * 1000))
- GB=$(($MB * 1000))
-MiB=$(($KiB * 1024))
-GiB=$(($MiB * 1024))
-
 stats=($(sudo docker stats --no-stream $id | tail -1))
 
 raw() {
+    # KB,MB,GB are used under net IO and block IO
+    KiB=1024
+     KB=1000
+     MB=$(($KB * 1000))
+     GB=$(($MB * 1000))
+    MiB=$(($KiB * 1024))
+    GiB=$(($MiB * 1024))
 	cnt=$(echo $1 | tr -cd "[0-9.]")
+
 	case $1 in
 		*"GiB")	bc <<< "$cnt * $GiB"	;;
 		*"GB")	bc <<< "$cnt * $GB"	    ;;
@@ -40,14 +40,28 @@ raw() {
 	esac
 }
 
+get(){
+    sudo docker inspect $id | jq .[0]$1 | sed 's/"//g'
+}
+
 case $arg in
-	--name)		    echo "${stats[1]}"	;;
-	--cpu)		    raw  "${stats[2]}"	;;
-	--mem_percent)	raw  "${stats[6]}"	;;
-	--mem_usage)	raw  "${stats[3]}"	;;
-	--mem_limit)	raw  "${stats[5]}"	;;
-	--net_i)	    raw  "${stats[7]}"	;;
-	--net_o)	    raw  "${stats[9]}"	;;
-	--block_i)	    raw  "${stats[10]}"	;;
-	--block_o)	    raw  "${stats[12]}"	;;
+	name)		    echo "${stats[1]}"	    ;;
+	net_i)	        raw  "${stats[7]}"	    ;;
+	net_o)	        raw  "${stats[9]}"	    ;;
+	block_i)	    raw  "${stats[10]}"	    ;;
+	block_o)	    raw  "${stats[12]}"	    ;;
+	mem_usage)	    raw  "${stats[3]}"	    ;;
+	mem_limit)	    raw  "${stats[5]}"	    ;;
+	mem_percent)    raw  "${stats[6]}"	    ;;
+    cpu_percent)    raw  "${stats[2]}"	    ;;
+    status)         get  ".State.Status"    ;;
+    oom)            get  ".State.OOMKilled" ;;
+    error)          get  ".State.Error"     ;;
+    startedat)      get  ".State.StartedAt" ;;
+    restartcount)   get  ".RestartCount"    ;;
+    driver)         get  ".Driver"          ;;
+    privileged)     get  ".Privileged"      ;;
+    user)           get  ".Config.User"     ;;
+    image)          get  ".Image"           ;;
+    ip)             get  ".NetworkSettings.IPAddress"   ;;
 esac

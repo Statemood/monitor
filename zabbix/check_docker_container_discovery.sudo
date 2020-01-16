@@ -1,0 +1,5 @@
+# File: /etc/sudoers.d/docker-container-list
+
+Cmnd_Alias DOCKERCONTAINERLIST = /usr/bin/docker ps -aq
+
+zabbix ALL=(root) NOPASSWD: DOCKERCONTAINERLIST

@@ -1,0 +1,5 @@
+# File: /etc/sudoers.d/docker-stats
+
+Cmnd_Alias DOCKERSTATS = /usr/bin/docker stats --no-stream [a-f0-9]*, /usr/bin/docker inspect [a-f0-9]*
+
+zabbix ALL=(root) NOPASSWD: DOCKERSTATS

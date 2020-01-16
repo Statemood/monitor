@@ -1,11 +1,11 @@
 #! /bin/sh
 
-# --------------------------------------------------
+# ------------------------------------------
+# Project Monitor
 #       https://github.com/Statemood/monitor
 #
+# Created by Lin Ru Lin.Ru@msn.com
 # --------------------------------------------------
-
-#
 
 Usage(){
     mesg="
