@@ -35,9 +35,9 @@ raw() {
         *"MB")	bc <<< "$cnt * $MB"     ;;
         *"KiB")	bc <<< "$cnt * $KiB"    ;;
         *"kB")	bc <<< "$cnt * $KB"     ;;
-        *"B")	echo $cnt               ;;
-        *"%")	echo $cnt               ;;
-        *)	    echo $1                 ;;
+        *"B")   echo $cnt               ;;
+        *"%")   echo $cnt               ;;
+        *)      echo $1                 ;;
     esac
 }
 
@@ -46,11 +46,11 @@ get(){
 }
 
 case $arg in
-    name)		    echo "${stats[1]}"	    ;;
-    net_i)	        raw  "${stats[7]}"	    ;;
-    net_o)	        raw  "${stats[9]}"	    ;;
-    block_i)	    raw  "${stats[10]}"	    ;;
-    block_o)	    raw  "${stats[12]}"	    ;;
+    name)           echo "${stats[1]}"	    ;;
+    net_i)          raw  "${stats[7]}"	    ;;
+    net_o)          raw  "${stats[9]}"	    ;;
+    block_i)        raw  "${stats[10]}"	    ;;
+    block_o)        raw  "${stats[12]}"	    ;;
     mem_usage)	    raw  "${stats[3]}"	    ;;
     mem_limit)	    raw  "${stats[5]}"	    ;;
     mem_percent)    raw  "${stats[6]}"	    ;;
