@@ -15,8 +15,11 @@ then
     echo "Missing arguments"
     exit 1
 fi
+ cmd="sudo docker stats --no-stream"
+arg1="--format {{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+arg2="\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}"
 
-stats=($(sudo docker stats --no-stream $id | tail -1))
+stats=($($cmd $id $arg1$arg2))
 
 raw() {
     # KB,MB,GB are used under net IO and block IO
