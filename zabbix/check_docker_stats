@@ -54,8 +54,6 @@ case $arg in
 	mem_limit)	    raw  "${stats[5]}"	    ;;
 	mem_percent)    raw  "${stats[6]}"	    ;;
     cpu_percent)    raw  "${stats[2]}"	    ;;
-    status)         get  ".State.Status"    ;;
-    oom)            get  ".State.OOMKilled" ;;
     error)          get  ".State.Error"     ;;
     startedat)      get  ".State.StartedAt" ;;
     restartcount)   get  ".RestartCount"    ;;
@@ -64,4 +62,7 @@ case $arg in
     user)           get  ".Config.User"     ;;
     image)          get  ".Image"           ;;
     ip)             get  ".NetworkSettings.IPAddress"   ;;
+    cpu_limit)      echo $(echo "scale=3;`get '.HostConfig.CpuQuota'` / 1000 / 1000" | bc) ;;
+    status)         r=`get ".State.Status"`
+                    test "$r" = "running" && echo 0 || echo 1 ;;
 esac
