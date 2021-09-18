@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+#coding=utf-8
+
+import os
+import json
+
+t  = os.popen("sudo /opt/megaraid/megacli -PDList -aALL -NoLog | grep '^Slot Number' | awk -F ': ' '{print $2}' | sort -n")
+
+disks = []
+for disk in  t.readlines():
+        r = os.path.basename(disk.strip())
+        disks += [{'{#PDISK}':r}]
+print json.dumps({'data':disks},sort_keys=True,indent=4,separators=(',',':'))

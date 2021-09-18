@@ -1,0 +1,177 @@
+#! /bin/bash
+
+library="$(dirname $0)/check_oracle_library"
+test -f $library && . $library || exit 1
+
+case $item in
+    discovery_disk_groups)
+        Command "select distinct name from gv\$asm_diskgroup" | egrep -v '^$|^--|^NAME|^no rows selected'   
+        ok=0
+        ;;
+
+    discovery_instances)
+        Command "select instance_name from gv\$instance" | egrep -v '^$|^--|^INSTANCE_NAME|^no rows selected'
+        ok=0
+        ;;
+
+    discovery_table_spaces)
+        Command "select name ts from gv\$tablespace"     | egrep -v '^$|^--|^TS|^[0-9]+ rows selected'
+        ok=0
+        ;;
+
+    alive)
+        sql="select 1 from dual"																				;;
+
+    archive_log_switch)
+        sql="select count(*) from gv\$log_history where first_time >= (sysdate - 1 / 24)"						;;
+
+    db_block_gets)
+        sql="select sum (value) from gv\$sysstat where name = 'db block gets'"									;;
+
+    db_block_changes)
+        sql="select sum (value) from gv\$sysstat where name = 'db block changes'"								;;
+
+    db_consistent_gets)
+        sql="select sum (value) from gv\$sysstat where name = 'consistent gets'"								;;
+
+    db_physical_reads)
+        sql="select sum (value) from gv\$sysstat where name = 'physical reads'"									;;
+
+    db_hit_ratio)
+        sql="select ( sum (case name when 'consistent gets' then value else 0 end) + sum (case name when 'db block gets' then value else 0 end) - sum (case name when 'physical reads' then value else 0 end)) / ( sum (case name when 'consistent gets' then value else 0 end) + sum (case name when 'db block gets' then value else 0 end)) * 100 from gv\$sysstat" ;;
+
+    db_version)
+        sql="select banner from gv\$version where banner like '%Oracle Database%'" 								
+        GetData && exit
+                                                                                                                ;;
+    hit_ratio_body)
+        sql="select gethitratio * 100 from gv\$librarycache where namespace = 'BODY'"							;;
+
+    hit_ratio_sql_area)     
+        sql="select gethitratio * 100 from gv\$librarycache where namespace = 'SQL AREA'"						;;
+    
+    hit_ratio_trigger)     
+        sql="select gethitratio * 100 from gv\$librarycache where namespace = 'TRIGGER'"						;;
+    
+    hit_ratio_table_proc)  
+        sql="select gethitratio * 100 from gv\$librarycache where namespace = 'TABLE/PROCEDURE'"				;;
+    
+    miss_latch)
+        sql="select sum (misses) from gv\$latch"																;;
+    
+    pga_aggregate_target) 
+        sql="select value from gv\$pgastat where name = 'aggregate PGA target parameter'"						;;
+    
+    pga) 
+        sql="select value from gv\$pgastat where name = 'total PGA inuse'"										;;
+    
+    phio_data_file_reads)   
+        sql="select sum (value) from gv\$sysstat where name = 'physical reads direct'"							;;
+    
+    phio_data_file_writes)   
+        sql="select sum (value) from gv\$sysstat where name = 'physical writes direct'"							;;
+    
+    phio_redo_writes)      
+        sql="select sum (value) from gv\$sysstat where name = 'redo writes'"									;;
+    
+    pin_hit_ratio_body)      
+        sql="select pins / (pins + reloads) * 100 from gv\$librarycache where namespace = 'BODY'"				;;
+
+    pin_hit_ratio_sql_area)    
+        sql="select pins / (pins + reloads) * 100  from gv\$librarycache  where namespace = 'SQL AREA'"			;;
+
+    pin_hit_ratio_trigger)
+        sql="select pins / (pins + reloads) * 100  from gv\$librarycache  where namespace = 'TRIGGER'"			;;
+    
+    pin_hit_ratio_table_proc) 
+        sql="select pins / (pins + reloads) * 100  from gv\$librarycache  where namespace = 'TABLE/PROCEDURE'"	;;
+
+    #pool_dict_cache maybe empty, check and insert zero instead
+    pool_dict_cache) 
+        sql="select bytes  from gv\$sgastat  where pool = 'shared pool' and name = 'dictionary cache'"			;;
+
+    pool_free_mem)   
+        sql="select bytes from gv\$sgastat where pool = 'shared pool' and name = 'free memory'"					;;	
+    
+    # pool_lib_cache maybe empty, check and insert zero instead
+    pool_lib_cache) 
+        sql="select bytes from gv\$sgastat where pool = 'shared pool' and name = 'library cache'"				;;
+
+    #pool_sql_area maybe empty, check and insert zero instead
+    pool_sql_area)          
+        sql="select bytes from gv\$sgastat where pool = 'shared pool' and name = 'sql area'"					;;
+
+    pool_misc)              
+        sql="select sum (bytes) from gv\$sgastat where pool = 'shared pool' and name not in ('library cache', 'dictionary cache', 'free memory', 'sql area')"	;;
+
+    max_procs)               
+        sql="select value from gv\$parameter where name = 'processes'"											;;
+    
+    proc_num)
+        sql="select count (*) from gv\$process"																	;;
+
+    max_session)
+        sql="select value from gv\$parameter where name = 'sessions'"											;;
+
+    session)
+        sql="select count (*) from gv\$session"																	;;
+
+    session_system)
+        sql="select count (*) from gv\$session where type = 'BACKGROUND'"										;;
+
+    session_active)
+        sql="select count (*) from gv\$session where type != 'BACKGROUND' and status = 'ACTIVE'"				;;
+
+    session_inactive)      
+        sql="select count (*) from gv\$session where type != 'BACKGROUND' and status = 'INACTIVE'"				;;
+
+    sga_buffer_cache)      
+        sql="select sum (bytes) from gv\$sgastat where name in ('db_block_buffers', 'buffer_cache')"			;;
+    
+    sga_fixed)
+        sql="select sum (bytes) from gv\$sgastat where name = 'fixed_sga'" 															;;
+    
+    sga_java_pool)
+        sql="select sum (bytes) from gv\$sgastat where pool = 'java pool'"															;;
+
+    sga_large_pool)
+        sql="select sum (bytes) from gv\$sgastat where pool = 'large pool'"															;;
+    
+    sga_shared_pool)        
+        sql="select sum (bytes) from gv\$sgastat where pool = 'shared pool'"														;;
+
+    sga_log_buffer)         
+        sql="select sum (bytes) from gv\$sgastat where name = 'log_buffer'" 														;;
+        
+    uptime)
+        sql="select to_char ( (sysdate - startup_time) *24*60 , 'FM99999999999999990') from gv\$instance"							;;
+
+    waits_directpath_read)  
+        sql="select total_waits from gv\$system_event where event = 'direct path read'"												;;
+
+    waits_file_io)          
+        sql="select nvl (sum (total_waits), 0) from gv\$system_event where event in ('file identify', 'file open')"					;;
+
+    waits_control_file_io)    
+        sql="select sum (total_waits) from gv\$system_event where event in ('control file sequential read' , 'control file single write' , 'control file parallel write')"	;;
+
+    waits_log_write)         
+        sql="select sum (total_waits) from gv\$system_event where event in ('log file single write', 'log file parallel write')" 	;;
+
+    waits_log_sync)         
+        sql="select sum(total_waits) from gv\$system_event where event = 'log file sync'"											;;
+
+    waits_multi_block_read)
+          sql="select sum (total_waits) from gv\$system_event where event = 'db file scattered read'" 								;;
+
+    waits_single_block_read) 
+        sql="select sum (total_waits) from gv\$system_event where event = 'db file sequential read'"								;;
+
+    #waits_sqlnet maybe empty, check and insert zero instead
+    waits_sql_net)
+        sql="select count(*)  from (select rootid from (select level lvl, connect_by_root (inst_id || '.' || sid) rootid, seconds_in_wait from gv\$session start with blocking_session is null connect by nocycle prior inst_id = blocking_instance and prior sid = blocking_session) where lvl > 1 group by rootid having sum(seconds_in_wait) > 300)"	;;
+esac
+
+test -z "$item" && exit
+
+GetData | awk '{print $1}'

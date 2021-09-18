@@ -1,8 +1,6 @@
 #! /bin/bash
 
 # ------------------------------------------
-<<<<<<< HEAD
-# check_memory
 # 
 # Created by Statemood, 2013.12.09 13:30
 # Updated by Statemood, 2013.12.09 14:00
@@ -47,9 +45,7 @@ else
     echo "OK - `Standrd_msg`"
     exit 0
 fi
-=======
 # Created by Statemood, 2013.09.02 14:00
-# Updated by Statemood, 2013.09.02 14:30
 #            Statemood@gmail.com
 #
 # Project:
@@ -70,4 +66,3 @@ case $1 in
     swap)
     
 esac
->>>>>>> 2a49c43f8d24f63ab3f7a6a80a6f5b5ed0d45677

@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+#coding=utf-8
+
+import os
+import json
+
+t  = os.popen("/opt/megaraid/megacli -AdpAllInfo -aALL -NoLog | grep '^Adapter ' | awk -F '#' '{print $2}'")
+
+items = []
+for item in  t.readlines():
+        r = os.path.basename(item.strip())
+        items += [{'{#RAID_ADAPTER}':r}]
+print json.dumps({'data':items},sort_keys=True,indent=4,separators=(',',':'))

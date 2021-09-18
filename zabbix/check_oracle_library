@@ -1,0 +1,20 @@
+        item="$1"
+ db_username="zabbix"
+ db_password="zabbix#Mon*2021"
+  oracle_env="/etc/zabbix/oracle_env"
+check_oracle="$(dirname $0)/check_oracle" 
+
+test $USER != zabbix                  && exit 1
+test -f $oracle_env  && . $oracle_env || exit 1
+
+Command(){
+    sqlplus -s "$db_username/$db_password" <<EOF
+    $1;
+EOF
+}
+
+GetData(){
+    test "$ok" = 0 && return
+    
+    Command "$sql" | grep -v '^$' | tail -1
+}

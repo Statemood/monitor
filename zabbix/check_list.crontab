@@ -1,0 +1,15 @@
+#! /bin/bash
+
+## Set crontab, every 2 minutes
+
+d=/dev/shm
+
+# Get RAID data
+/opt/megaraid/megacli -PDList     -aALL -NoLog        > $d/disk.info
+/opt/megaraid/megacli -AdpAllInfo -aALL -NoLog        > $d/raid.info
+
+# Disable if no bbu found.
+#/opt/megaraid/megacli -AdpBbuCmd  -aAll -NoLog       > $d/bbu.info
+
+# Get IMPI data
+/usr/bin/ipmitool sdr                   > $d/ipmi.info

@@ -1,0 +1,26 @@
+#! /bin/bash
+
+item="$1"
+ key="$2"
+
+library="$(dirname $0)/check_oracle_library"
+test -f $library && . $library || exit 1
+
+data=(`$check_oracle $item`)
+
+ len=${#data[@]}
+
+printf "{\n"
+printf  '\t'"\"data\":["
+for ((i=0;i<$len;i++))
+do
+        printf '\n\t\t{'
+        printf "\"{#$key}\":\"${data[$i]}\"}"
+        if [ $i -lt $[$len-1] ]
+        then
+            printf ','
+        fi
+done
+
+printf  "\n\t]\n"
+printf "}\n"

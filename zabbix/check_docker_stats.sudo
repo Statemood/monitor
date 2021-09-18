@@ -1,6 +1,6 @@
 # File: /etc/sudoers.d/docker-stats
 
-Cmnd_Alias DOCKERSTAT = /usr/bin/docker stats --no-stream --format "{{.Container}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}" [a-f0-9]*
+Cmnd_Alias DOCKERSTAT = /usr/bin/docker stats --no-stream  [a-f0-9]*
 
 Cmnd_Alias DOCKERINFO = /usr/bin/docker inspect [a-f0-9]*
 

@@ -52,19 +52,18 @@
 # LDI   Learn Delay Interval
 # ALM   Auto-Learn Mode"""
 
+import sys 
+import os
+import json
+
+bbuid = sys.argv[0]
+
 def jsondata():
-    import os
-    import json
-
     items = []
-    for stat in os.popen("tail -1 /dev/shm/bbu.info | awk -F ': ' '{print $2}'"):
-        if stat == '0x22\n':
-            print('{"data":[{"bbu": "No bbu information"}]}')
-        else:
-            for item in __doc__.split("\n"):
-                items += [{'{#BBU.KEY}':item[2:5], '{#BBU.TAG}':item[8:]}]
+    for item in __doc__.split("\n"):
+        items += [{'{#BBU.KEY}':item[2:5], '{#BBU.TAG}':item[8:]}]
 
-            print json.dumps({'data':items},sort_keys=True,indent=4,separators=(',',':'))
+    print json.dumps({'data':items},sort_keys=True,indent=4,separators=(',',':'))
 
 if __name__ == "__main__":
     jsondata()

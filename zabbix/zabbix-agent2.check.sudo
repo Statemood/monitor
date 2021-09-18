@@ -1,0 +1,7 @@
+# File: /etc/sudoers.d/zabbix-check.sudo
+
+Cmnd_Alias DOCKERCONTAINERLIST  = /usr/bin/docker ps -aq
+
+Cmnd_Alias RAID_MEGACLI         = /opt/megaraid/megacli -AdpAllInfo*, /opt/megaraid/megacli -AdpBbuCmd*, /opt/megaraid/megacli -PDList*
+
+zabbix ALL=(root) NOPASSWD: DOCKERCONTAINERLIST, RAID_MEGACLI

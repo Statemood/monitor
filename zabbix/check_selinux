@@ -8,29 +8,16 @@
 #
 # --------------------------------------------------
 
-
-results(){
-    stat="`sestatus | grep '^SELinux status' | awk -F ':' '{print $2}' | awk '{print $1}'`"
-     res="`sestatus | grep \"$se_key\" | awk -F ':' '{print $2}' | awk '{print $1}'`"
-
-    #test "$res" = "$se_set" && echo 0 || echo 1
-    echo "$res"
-}
-
 case "$1" in
     status)
-        se_key="^SELinux status"
-        se_set="enabled"
-        results
+        sestatus | grep '^SELinux status' | awk -F ':' '{print $2}' | awk '{print $1}'
         ;;
-    mode_current)
-        se_key="^Current mode"
-        se_set="enforcing"
-        results
+    current)
+        mode=`sestatus | grep '^Current mode' | awk '{print $3}'`
+        test -z "$mode" && mode=disabled
+        echo $mode
         ;;
-    mode_config)
-        se_key="^Mode from config file"
-        se_set="enforcing"
-        results
+    config)
+        grep '^SELINUX=' /etc/selinux/config | awk -F '=' '{print $2}'
         ;;
 esac

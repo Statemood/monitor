@@ -6,9 +6,12 @@
 # ------------------------------------------
 
 gen_data(){
-    for core in `grep "^processor.*" /proc/cpuinfo | awk '{print $3}'`
+    for cpu in `grep '^physical id' /proc/cpuinfo | sort | uniq | awk -F ': ' '{print $2}'`
     do
-        echo "${core}"
+        for core in `sensors -A | sed -e '/./{H;$!d;}' -e "x;/coretemp-isa-000$cpu/b" -e d | grep '^Core [0-9].' | awk -F ':' '{print $1}' | awk '{print $2}'`
+        do
+            echo "${cpu}_${core}"
+        done
     done
 }
 data=(`gen_data`)
@@ -20,7 +23,7 @@ printf  '\t'"\"data\":["
 for ((i=0;i<$len;i++))
 do
         printf '\n\t\t{'
-        printf "\"{#COREID}\":\"${data[$i]}\"}"
+        printf "\"{#PCOREID}\":\"${data[$i]}\"}"
         if [ $i -lt $[$len-1] ]
         then
             printf ','

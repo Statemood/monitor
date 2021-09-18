@@ -1,0 +1,62 @@
+#! /bin/bash
+
+item="$1"
+name="$2"
+ key="$3"
+
+library="$(dirname $0)/check_oracle_library"
+test -f $library && . $library || exit 1
+
+ASMData(){
+    Command "set linesize 800 pagesize 100
+            $sql" | grep "$name" | awk "{print \$$1}"
+}
+
+case $item in
+    asm)
+        sql="col format name a10
+             select distinct name,state,type,total_mb,free_mb,cold_used_mb from gv\$asm_diskgroup where name = '$name'"
+
+        case $key in
+            state)
+                state="`ASMData 2`"
+                echo $state | egrep -q 'CONNECTED|MOUNTED'
+                test $? = 0 && echo 1 || echo 0
+                ;;
+            type)           ASMData 3   ;;
+            mb_total)       echo "`ASMData 4` * 1024 * 1024" | bc  ;;
+            mb_free)        echo "`ASMData 5` * 1024 * 1024" | bc  ;;
+            mb_used)        echo "`ASMData 6` * 1024 * 1024" | bc  ;;
+        esac
+        exit
+        ;;
+    instance)
+        sql="select instance_name,$key from gv\$instance where instance_name = '$name'"
+        ASMData 2
+        exit
+        ;;
+    ts)
+        case $key in
+            percent)
+                sql="
+                    col ts_name format a15
+                    SELECT a.tablespace_name as 'ts_name',
+                        b.total,
+                        a.free,
+                        (b.total - a.free),
+                        round(b.total / (1024 * 1024),2) as 'total_unit_M',
+                        round(a.free / (1024 * 1024),2) as 'free_unit_M',
+                        round((b.total - a.free) / (1024 * 1024),2) as 'used_unit_M',
+                        TO_CHAR(NVL(round ((b.total - a.free) / total, 4) * 100, 0) , '990.90') as 'Usage'
+                    FROM (SELECT tablespace_name, SUM(bytes) free FROM dba_free_space GROUP BY tablespace_name) a,
+                        (SELECT tablespace_name, SUM(bytes) total FROM dba_data_files GROUP BY tablespace_name) b
+                    WHERE a.tablespace_name = b.tablespace_name"
+                ASMData 2
+                ;;
+            size)
+                sql="select ta.tablespace_name as ts, ta.used_space * tb.block_size as bytes from dba_tablespace_usage_metrics ta join dba_tablespaces tb on ta.tablespace_name = tb.tablespace_name where ta.tablespace_name = '$name'"
+                ASMData 2
+                ;;
+        esac
+        ;;
+esac

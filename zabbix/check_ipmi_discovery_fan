@@ -11,10 +11,13 @@
 
 ipmi_info=/dev/shm/ipmi.info
 
-data=(`awk -F '|' '{print $1}' $ipmi_info   |\
-       grep "^FAN "                         |\
-       tr -s " " "_"                        |\
-       sed 's/_$//'                         |\
+data=(`awk -F '|' '{print $1,",",$2,",",$3}' $ipmi_info |\
+       egrep "^FAN |^Fan "                              |\
+       egrep -i "ok|rpm"                                |\
+       grep -v '0x00'                                   |\
+       awk -F ',' '{print $1}'                          |\
+       tr -s " " "_"                                    |\
+       sed 's/_$//'                                     |\
        sort`)
 
 len=${#data[@]}
